@@ -8,7 +8,7 @@ import { cn } from "@/utils/helper";
 
 
 const Home = () => {
-  
+
   // Use different data source for Hero vs sections to avoid duplicates
   const { data: heroData, isLoading: heroLoading, isError: heroError } = useGetTracksQuery({
     category: "tracks",
@@ -17,7 +17,7 @@ const Home = () => {
     cacheKey: "hero" // Use different cache key to avoid conflicts with main sections
   });
 
-  const { data, isLoading, isError, error } = useGetTracksQuery({
+  const { data, isLoading, isError } = useGetTracksQuery({
     category: "tracks",
     type: "popular",
     page: 1,

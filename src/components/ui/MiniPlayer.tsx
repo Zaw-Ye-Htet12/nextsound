@@ -10,6 +10,7 @@ import {
   FiShuffle,
   FiRepeat,
   FiHeart,
+  FiList,
   FiMoreHorizontal,
   FiMinimize2,
   FiMaximize2
@@ -35,7 +36,9 @@ interface MiniPlayerProps {
   onClose?: () => void;
   isMinimized?: boolean;
   onToggleMinimize?: () => void;
+  onToggleQueue?: () => void;
   className?: string;
+  isFavorite?: boolean;
 }
 
 export const MiniPlayer: React.FC<MiniPlayerProps> = ({
@@ -53,15 +56,18 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
   onToggleShuffle,
   onToggleRepeat,
   onToggleFavorite,
+  onClose: _onClose,
   isMinimized = false,
   onToggleMinimize,
-  className
+  onToggleQueue,
+  className,
+  isFavorite = false,
 }) => {
   const [isMuted, setIsMuted] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
+  const [isDragging] = useState(false);
   const [localProgress, setLocalProgress] = useState(progress);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [previousVolume, setPreviousVolume] = useState(volume);
 
   const progressRef = useRef<HTMLDivElement>(null);
 
@@ -72,7 +78,27 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
     }
   }, [progress, isDragging]);
 
+  // Sync volume state on mount
+  useEffect(() => {
+    if (volume > 0 && isMuted) {
+      setIsMuted(false);
+    } else if (volume === 0 && !isMuted) {
+      setIsMuted(true);
+    }
+  }, [volume, isMuted]);
+
   if (!currentTrack) return null;
+
+  const handleVolumeClick = () => {
+    if (isMuted) {
+      setIsMuted(false);
+      onVolumeChange?.(previousVolume || 80);
+    } else {
+      setPreviousVolume(volume);
+      setIsMuted(true);
+      onVolumeChange?.(0);
+    }
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -80,18 +106,7 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleVolumeClick = () => {
-    if (isMuted) {
-      setIsMuted(false);
-      onVolumeChange?.(volume);
-    } else {
-      setIsMuted(true);
-      onVolumeChange?.(0);
-    }
-  };
-
   const handleFavoriteClick = () => {
-    setIsFavorite(!isFavorite);
     onToggleFavorite?.();
   };
 
@@ -119,7 +134,11 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
           <img
             src={getImageUrl(currentTrack.poster_path)}
             alt={currentTrack.title || currentTrack.name}
-            className="w-10 h-10 rounded-full object-cover"
+            className={cn(
+              "w-10 h-10 rounded-full object-cover",
+              isPlaying && "animate-spin"
+            )}
+            style={{ animationDuration: '3s' }}
           />
           <Button
             onClick={onTogglePlay}
@@ -148,12 +167,12 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
       className
     )}>
       {/* Progress bar - full width at top */}
-      <div 
-        className="w-full h-1 bg-gray-200 dark:bg-gray-700 cursor-pointer group" 
+      <div
+        className="w-full h-1 bg-gray-200 dark:bg-gray-700 cursor-pointer group"
         ref={progressRef}
         onClick={handleProgressClick}
       >
-        <div 
+        <div
           className="h-full bg-blue-600 transition-all duration-100 rounded-full relative group-hover:bg-blue-500"
           style={{ width: `${localProgress}%` }}
         >
@@ -170,7 +189,6 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
               alt={currentTrack.title || currentTrack.name}
               className="w-12 h-12 rounded-lg object-cover shadow-md dark:brightness-75 dark:contrast-110 dark:saturate-90"
             />
-            {/* Audio visualizer dots */}
             {isPlaying && (
               <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1">
                 <div className="flex space-x-0.5">
@@ -181,7 +199,7 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
               </div>
             )}
           </div>
-          
+
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-gray-900 dark:text-white truncate text-sm">
               {currentTrack.title || currentTrack.name || 'Unknown Track'}
@@ -190,15 +208,15 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
               {currentTrack.artist || 'Unknown Artist'}
             </p>
           </div>
-          
+
           <Button
             onClick={handleFavoriteClick}
             variant="ghost"
             size="icon"
             className={cn(
               "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 hover:scale-110",
-              isFavorite 
-                ? "text-red-500 hover:text-red-600" 
+              isFavorite
+                ? "text-red-500 hover:text-red-600"
                 : "text-gray-400 hover:text-red-500 dark:text-gray-500"
             )}
           >
@@ -208,22 +226,20 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
 
         {/* Main controls */}
         <div className="flex items-center space-x-4 px-8">
-          {/* Shuffle */}
           <Button
             onClick={onToggleShuffle}
             variant="ghost"
             size="icon"
             className={cn(
               "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 hover:scale-110",
-              isShuffled 
-                ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20" 
+              isShuffled
+                ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20"
                 : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             )}
           >
             <FiShuffle className="w-4 h-4" />
           </Button>
 
-          {/* Previous */}
           <Button
             onClick={onSkipPrevious}
             variant="ghost"
@@ -233,7 +249,6 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
             <FiSkipBack className="w-5 h-5" />
           </Button>
 
-          {/* Play/Pause */}
           <Button
             onClick={onTogglePlay}
             variant="ghost"
@@ -247,7 +262,6 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
             )}
           </Button>
 
-          {/* Next */}
           <Button
             onClick={onSkipNext}
             variant="ghost"
@@ -257,15 +271,14 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
             <FiSkipForward className="w-5 h-5" />
           </Button>
 
-          {/* Repeat */}
           <Button
             onClick={onToggleRepeat}
             variant="ghost"
             size="icon"
             className={cn(
               "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 hover:scale-110 relative",
-              repeatMode !== 'off' 
-                ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20" 
+              repeatMode !== 'off'
+                ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20"
                 : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             )}
           >
@@ -278,13 +291,11 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
 
         {/* Time and volume */}
         <div className="flex items-center space-x-4 min-w-0 flex-1 justify-end">
-          {/* Time display */}
           <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">
             {formatTime(currentTime)} / {formatTime(totalTime)}
           </div>
 
-          {/* Volume control */}
-          <div 
+          <div
             className="relative"
             onMouseEnter={() => setShowVolumeSlider(true)}
             onMouseLeave={() => setShowVolumeSlider(false)}
@@ -301,20 +312,31 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
                 <FiVolume2 className="w-4 h-4" />
               )}
             </Button>
-            
-            {/* Volume slider */}
+
             {showVolumeSlider && (
-              <div className="absolute bottom-full right-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2">
-                <div className="w-20 h-24 flex flex-col items-center">
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">{volume}%</div>
-                  <div className="flex-1 w-1 bg-gray-200 dark:bg-gray-600 rounded-full relative">
-                    <div 
-                      className="w-full bg-blue-600 rounded-full absolute bottom-0"
+              <div
+                className="absolute bottom-full right-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 z-50"
+                onMouseEnter={() => setShowVolumeSlider(true)}
+              >
+                <div
+                  className="w-8 h-32 flex flex-col items-center justify-center cursor-pointer group"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const height = rect.height;
+                    const y = e.clientY - rect.top;
+                    const percentage = Math.max(0, Math.min(100, 100 - (y / height) * 100));
+                    onVolumeChange?.(Math.round(percentage));
+                    if (percentage > 0) setIsMuted(false);
+                  }}
+                >
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-mono h-4">
+                    {Math.round(volume || 0)}
+                  </div>
+                  <div className="flex-1 w-1.5 bg-gray-200 dark:bg-gray-700 rounded-full relative overflow-hidden">
+                    <div
+                      className="w-full bg-blue-600 absolute bottom-0 transition-all duration-75"
                       style={{ height: `${volume}%` }}
-                    />
-                    <div 
-                      className="absolute w-3 h-3 bg-blue-600 rounded-full -ml-1 cursor-pointer"
-                      style={{ bottom: `${volume}%`, marginBottom: '-6px' }}
                     />
                   </div>
                 </div>
@@ -322,16 +344,17 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
             )}
           </div>
 
-          {/* More options */}
+
           <Button
+            onClick={onToggleQueue}
             variant="ghost"
             size="icon"
             className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200"
+            title="Queue"
           >
-            <FiMoreHorizontal className="w-4 h-4" />
+            <FiList className="w-4 h-4" />
           </Button>
 
-          {/* Minimize */}
           <Button
             onClick={onToggleMinimize}
             variant="ghost"

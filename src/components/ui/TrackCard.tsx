@@ -3,14 +3,17 @@ import { Card, CardContent } from './card';
 import {
   FaClock
 } from 'react-icons/fa';
+import { FiPlusCircle, FiHeart } from 'react-icons/fi';
 import { ITrack } from '@/types';
 import { getImageUrl, cn } from '@/utils';
+import { useAudioPlayerContext } from '@/context/audioPlayerContext';
 
 interface TrackCardProps {
   track: ITrack;
   category: string;
   isPlaying?: boolean;
   onPlay?: (track: ITrack) => void;
+  onAddToQueue?: (track: ITrack) => void;
   variant?: 'compact' | 'detailed' | 'featured';
   className?: string;
 }
@@ -19,12 +22,16 @@ export const TrackCard: React.FC<TrackCardProps> = ({
   track,
   category: _category,
   isPlaying: _isPlayingProp,
-  onPlay: _onPlayProp,
+  onPlay,
+  onAddToQueue,
   variant = 'detailed',
   className
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+
+  const { favorites, toggleFavorite } = useAudioPlayerContext();
+  const isFavorite = favorites.some(t => t.id === track.id);
 
   const { poster_path, original_title: title, name, artist, album, duration } = track;
   const displayTitle = title || name || 'Unknown Track';
@@ -41,7 +48,7 @@ export const TrackCard: React.FC<TrackCardProps> = ({
   const imageHeight = variant === 'compact' ? 160 : variant === 'featured' ? 240 : 200;
 
   return (
-    <Card 
+    <Card
       className={cn(
         "group relative transition-all duration-300 ease-out overflow-hidden",
         "hover:scale-[1.03] hover:-translate-y-2 cursor-pointer",
@@ -54,17 +61,27 @@ export const TrackCard: React.FC<TrackCardProps> = ({
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={(e) => {
+        e.stopPropagation();
+        onPlay?.(track);
+      }}
     >
       {/* Main Content */}
       <div className="block relative h-full">
         {/* Image Container */}
-        <div className="relative overflow-hidden rounded-lg mb-3">
+        <div
+          className="relative overflow-hidden rounded-lg mb-3"
+          onClick={(e) => {
+            e.stopPropagation();
+            onPlay?.(track);
+          }}
+        >
           {/* Loading skeleton */}
           {!imageLoaded && (
-            <div className="absolute inset-0 bg-gray-200 dark:bg-hover-gray animate-pulse rounded-lg" 
-                 style={{ height: imageHeight }} />
+            <div className="absolute inset-0 bg-gray-200 dark:bg-hover-gray animate-pulse rounded-lg"
+              style={{ height: imageHeight }} />
           )}
-          
+
           {/* Album artwork */}
           <img
             src={getImageUrl(poster_path)}
@@ -83,9 +100,40 @@ export const TrackCard: React.FC<TrackCardProps> = ({
 
           {/* Gradient overlay on hover */}
           <div className={cn(
-            "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent transition-opacity duration-300 rounded-lg",
+            "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent transition-opacity duration-300 rounded-lg flex items-end justify-between p-3",
             isHovered ? "opacity-100" : "opacity-0"
-          )} />
+          )}>
+            {onAddToQueue && (
+              <div className="flex gap-2">
+                {/* Favorite Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(track);
+                  }}
+                  className={cn(
+                    "transition-colors transform hover:scale-110 p-2 bg-black/40 rounded-full hover:bg-black/60",
+                    isFavorite ? "text-red-500" : "text-white hover:text-red-500"
+                  )}
+                  title={isFavorite ? "Remove from Library" : "Add to Library"}
+                >
+                  <FiHeart size={24} className={cn(isFavorite && "fill-current")} />
+                </button>
+
+                {/* Add to Queue Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card click
+                    onAddToQueue(track);
+                  }}
+                  className="text-white hover:text-accent-orange transition-colors transform hover:scale-110 p-2 bg-black/40 rounded-full hover:bg-black/60"
+                  title="Add to Queue"
+                >
+                  <FiPlusCircle size={24} />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Track information */}
@@ -98,7 +146,7 @@ export const TrackCard: React.FC<TrackCardProps> = ({
           )}>
             {displayTitle}
           </h3>
-          
+
           {/* Artist name */}
           <p className={cn(
             "text-gray-600 dark:text-text-secondary truncate font-medium",

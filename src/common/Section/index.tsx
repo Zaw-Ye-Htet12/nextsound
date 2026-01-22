@@ -86,19 +86,10 @@ const Section: FC<SectionProps> = ({
             <Error error={String(errorMessage)} className="h-full text-[18px]" />
           ) : (
             <APIErrorBoundary>
-              {title === "Latest Hits" ? (
-                <MusicGrid
-                  tracks={allTracks}
-                  category={category}
-                  initialDisplayCount={18}
-                  loadMoreCount={6}
-                />
-              ) : (
-                <MusicSlides
-                  tracks={data.results}
-                  category={category}
-                />
-              )}
+              <MusicSlides
+                tracks={data.results}
+                category={category}
+              />
             </APIErrorBoundary>
           )}
         </div>

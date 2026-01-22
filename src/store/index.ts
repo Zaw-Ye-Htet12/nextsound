@@ -1,17 +1,17 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { spotifyApi } from '@/services/SpotifyAPI';
+import { itunesApi } from '@/services/ItunesAPI';
 import { musicApi } from '@/services/MusicAPI';
 
 export const store = configureStore({
   reducer: {
-    // New Spotify API
-    [spotifyApi.reducerPath]: spotifyApi.reducer,
+    // iTunes API
+    [itunesApi.reducerPath]: itunesApi.reducer,
     // Unified Music API
     [musicApi.reducerPath]: musicApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
-      spotifyApi.middleware,
+      itunesApi.middleware,
       musicApi.middleware
     ),
 });

@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { m } from "framer-motion";
 
 import { Poster } from "@/common";
-import { mainHeading, maxWidth, paragraph, watchBtn } from "@/styles";
+import { mainHeading, maxWidth, paragraph } from "@/styles";
 import { ITrack } from "@/types";
 import { cn } from "@/utils/helper";
 import { useMotion } from "@/hooks/useMotion";

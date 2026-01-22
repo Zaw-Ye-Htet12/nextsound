@@ -1,11 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSearchMusicQuery } from '@/services/SpotifyAPI';
+import { itunesApi } from '@/services/ItunesAPI';
 import { ITrack } from '@/types';
 import { useTheme } from '@/context/themeContext';
 import { useGlobalContext } from '@/context/globalContext';
-import { getMockData, shouldUseMockData } from '@/data/mockMusicData';
-import { performEnhancedSearch } from '@/utils/searchAlgorithm';
 
 export interface SearchResult {
   id: string;
@@ -46,8 +44,7 @@ export const useCommandPalette = ({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [searchHistory, setSearchHistory] = useState<SearchResult[]>([]);
-  const [mockSearchResults, setMockSearchResults] = useState<Array<{ track: ITrack; isExactMatch: boolean }>>([]);
-  const [isMockSearchLoading, setIsMockSearchLoading] = useState(false);
+
 
   // Load recent searches from localStorage on mount
   useEffect(() => {
@@ -63,56 +60,18 @@ export const useCommandPalette = ({
     }
   }, []);
 
-  // Handle mock search when in demo mode
-  useEffect(() => {
-    const useMockData = shouldUseMockData();
-    const searchQuery = query.trim();
-
-    if (useMockData && searchQuery) {
-      setIsMockSearchLoading(true);
-
-      // Simulate search delay for better UX
-      const searchTimeout = setTimeout(() => {
-        try {
-          // Get comprehensive mock data from all sources
-          const latestHits = getMockData('tracks', 'latest');
-          const popularTracks = getMockData('tracks', 'popular');
-          const allTracks = [...latestHits.results, ...popularTracks.results];
-
-          // Perform enhanced search using shared utility (limit to 8 results for Command Palette)
-          const results = performEnhancedSearch(allTracks, searchQuery, 8);
-          // Map SearchResult[] to { track, isExactMatch }
-          setMockSearchResults(results.map(result => ({ track: result.track, isExactMatch: result.isExactMatch })));
-        } catch (error) {
-          console.error('Mock search error:', error);
-          setMockSearchResults([]);
-        } finally {
-          setIsMockSearchLoading(false);
-        }
-      }, 100);
-
-      return () => clearTimeout(searchTimeout);
-    } else if (!searchQuery) {
-      // Clear results when query is empty
-      setMockSearchResults([]);
-      setIsMockSearchLoading(false);
-    }
-  }, [query]);
-
-  // Search for music when query changes (only when not using mock data)
-  const useMockData = shouldUseMockData();
+  // Search for music when query changes using iTunes API
   const {
     data: musicSearchData,
     isLoading: isMusicSearchLoading,
     error: musicSearchError
-  } = useSearchMusicQuery(
+  } = itunesApi.useSearchMusicQuery(
     {
       query: query.trim(),
-      type: 'track',
       limit: 8
     },
     {
-      skip: !query.trim() || useMockData // Skip Spotify API when using mock data
+      skip: !query.trim()
     }
   );
 
@@ -196,25 +155,12 @@ export const useCommandPalette = ({
       });
   }, [query, commands]);
 
-  // Transform music search results (from either Spotify API or mock search)
+  // Transform music search results
   const musicResults: SearchResult[] = useMemo(() => {
-    if (useMockData) {
-      // Use mock search results with exact match information
-      if (!mockSearchResults.length) return [];
-
-      return mockSearchResults.map(({ track, isExactMatch }) => ({
-        id: track.spotify_id || track.id,
-        type: 'track' as const,
-        title: track.title || track.name || 'Unknown Track',
-        subtitle: `${track.artist || 'Unknown Artist'} • ${track.album || 'Unknown Album'}`,
-        image: track.poster_path,
-        data: track,
-        isExactMatch
-      }));
-    } else if (musicSearchData?.results) {
-      // Use Spotify API results (no exact match detection for now)
+    if (musicSearchData?.results) {
+      // Use iTunes API results
       return musicSearchData.results.map((track: ITrack) => ({
-        id: track.spotify_id || track.id,
+        id: track.id,
         type: 'track' as const,
         title: track.title || track.name || 'Unknown Track',
         subtitle: `${track.artist || 'Unknown Artist'} • ${track.album || 'Unknown Album'}`,
@@ -225,7 +171,7 @@ export const useCommandPalette = ({
     }
 
     return [];
-  }, [useMockData, mockSearchResults, musicSearchData]);
+  }, [musicSearchData]);
 
   // Separate exact matches from recommendations
   const { exactMatches, recommendations } = useMemo(() => {
@@ -284,13 +230,11 @@ export const useCommandPalette = ({
     return searchHistory.slice(0, 5);
   }, [query, searchHistory]);
 
-  // Loading state (handles both mock search and Spotify API)
-  const isLoading = useMockData
-    ? isMockSearchLoading && query.trim()
-    : isMusicSearchLoading && query.trim();
+  // Loading state
+  const isLoading = isMusicSearchLoading && query.trim();
 
-  // Error state (only show errors for Spotify API, mock search shouldn't fail)
-  const searchError = useMockData ? null : musicSearchError;
+  // Error state
+  const searchError = musicSearchError;
 
   return {
     query,

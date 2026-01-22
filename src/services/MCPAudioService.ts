@@ -1,7 +1,7 @@
 /**
- * MCPAudioService - Enhanced Spotify integration for preview URL fetching
+ * MCPAudioService - Enhanced iTunes integration for preview URL fetching
  *
- * This service provides MCP-style functionality for fetching Spotify track preview URLs
+ * This service provides MCP-style functionality for fetching iTunes track preview URLs
  * while leveraging our existing backend proxy and API infrastructure.
  */
 
@@ -18,66 +18,26 @@ export class MCPAudioService {
   private retryDelay: number = 1000;
 
   constructor() {
-    // Use existing backend proxy for CORS handling
+    // Use existing backend proxy for CORS handling, pointing to iTunes
     this.baseUrl = import.meta.env.VITE_USE_BACKEND_PROXY
-      ? 'http://localhost:3001/api/spotify'
-      : 'https://api.spotify.com/v1';
+      ? 'http://localhost:3001/api/itunes'
+      : 'https://itunes.apple.com/search';
   }
 
   /**
-   * Fetch a track with its preview URL from Spotify
-   */
-  async fetchTrackWithPreview(trackId: string): Promise<PreviewTrack | null> {
-    try {
-      console.log(`🎵 MCPAudioService: Fetching track details for ${trackId}`);
-
-      const response = await this.makeRequest(`/tracks/${trackId}`);
-
-      if (!response.ok) {
-        console.error(`Failed to fetch track ${trackId}:`, response.status);
-        return null;
-      }
-
-      const spotifyTrack = await response.json();
-
-      // Transform Spotify track to our ITrack format with preview URL
-      const track: PreviewTrack = {
-        id: spotifyTrack.id,
-        original_title: spotifyTrack.name,
-        name: spotifyTrack.name,
-        poster_path: spotifyTrack.album?.images?.[0]?.url || null,
-        backdrop_path: spotifyTrack.album?.images?.[0]?.url || null,
-        overview: `${spotifyTrack.artists?.[0]?.name || 'Unknown Artist'} - ${spotifyTrack.album?.name || 'Unknown Album'}`,
-        artist: spotifyTrack.artists?.[0]?.name || 'Unknown Artist',
-        album: spotifyTrack.album?.name || 'Unknown Album',
-        duration: Math.round((spotifyTrack.duration_ms || 0) / 1000),
-        popularity: spotifyTrack.popularity || 0,
-        preview_url: spotifyTrack.preview_url, // This is the key enhancement!
-        spotify_id: spotifyTrack.id
-      };
-
-      console.log(`✅ MCPAudioService: Track fetched successfully`, {
-        name: track.name,
-        hasPreview: !!track.preview_url,
-        previewUrl: track.preview_url?.substring(0, 50) + '...'
-      });
-
-      return track;
-
-    } catch (error) {
-      console.error(`❌ MCPAudioService: Error fetching track ${trackId}:`, error);
-      return null;
-    }
-  }
-
-  /**
-   * Search for tracks with preview URLs
+   * Search for tracks with preview URLs using iTunes
    */
   async searchTracksWithPreviews(query: string, limit: number = 10): Promise<PreviewTrack[]> {
     try {
       console.log(`🔍 MCPAudioService: Searching tracks with previews for "${query}"`);
 
-      const response = await this.makeRequest(`/search?q=${encodeURIComponent(query)}&type=track&limit=${limit}`);
+      // iTunes uses query param 'term', 'limit', 'media=music', 'entity=song'
+      // If we are using the proxy, it expects standard query params.
+      // If direct, same.
+      // Note: The proxy endpoint is /api/itunes, which accepts query params directly.
+
+      const endpoint = `?term=${encodeURIComponent(query)}&limit=${limit}&media=music&entity=song&country=US`;
+      const response = await this.makeRequest(endpoint);
 
       if (!response.ok) {
         console.error(`Search failed:`, response.status);
@@ -85,24 +45,29 @@ export class MCPAudioService {
       }
 
       const data = await response.json();
-      const tracks = data.tracks?.items || [];
+      const tracks = data.results || [];
 
       // Transform and filter tracks with preview URLs
       const tracksWithPreviews: PreviewTrack[] = tracks
-        .map((spotifyTrack: any) => ({
-          id: spotifyTrack.id,
-          original_title: spotifyTrack.name,
-          name: spotifyTrack.name,
-          poster_path: spotifyTrack.album?.images?.[0]?.url || null,
-          backdrop_path: spotifyTrack.album?.images?.[0]?.url || null,
-          overview: `${spotifyTrack.artists?.[0]?.name || 'Unknown Artist'} - ${spotifyTrack.album?.name || 'Unknown Album'}`,
-          artist: spotifyTrack.artists?.[0]?.name || 'Unknown Artist',
-          album: spotifyTrack.album?.name || 'Unknown Album',
-          duration: Math.round((spotifyTrack.duration_ms || 0) / 1000),
-          popularity: spotifyTrack.popularity || 0,
-          preview_url: spotifyTrack.preview_url,
-          spotify_id: spotifyTrack.id
-        }))
+        .map((track: any) => {
+          const highResImage = track.artworkUrl100?.replace('100x100bb', '600x600bb') || '';
+          return {
+            id: String(track.trackId),
+            spotify_id: String(track.trackId),
+            original_title: track.trackName,
+            name: track.trackName,
+            poster_path: highResImage,
+            backdrop_path: highResImage,
+            overview: `${track.artistName} - ${track.collectionName}`,
+            artist: track.artistName,
+            album: track.collectionName,
+            duration: track.trackTimeMillis,
+            popularity: 75,
+            preview_url: track.previewUrl,
+            title: track.trackName,
+            external_urls: { spotify: track.trackViewUrl }
+          };
+        })
         .filter((track: PreviewTrack) => track.preview_url); // Only tracks with previews
 
       console.log(`✅ MCPAudioService: Found ${tracksWithPreviews.length} tracks with preview URLs out of ${tracks.length} total tracks`);
@@ -124,8 +89,8 @@ export class MCPAudioService {
       return track as PreviewTrack;
     }
 
-    // Try to find the track on Spotify by searching for it
-    const searchQuery = `track:"${track.name || track.original_title}" artist:"${track.artist}"`;
+    // Try to find the track on iTunes by searching for it
+    const searchQuery = `${track.name || track.original_title} ${track.artist || ''}`;
     const searchResults = await this.searchTracksWithPreviews(searchQuery, 1);
 
     if (searchResults.length > 0) {
@@ -135,7 +100,9 @@ export class MCPAudioService {
       return {
         ...track,
         preview_url: searchResults[0].preview_url,
-        spotify_id: searchResults[0].spotify_id
+        // We might want to keep the original ID if it's important, or update it
+        // But for playback, the preview_url is what matters.
+        // spotify_id: searchResults[0].spotify_id 
       };
     }
 
@@ -146,6 +113,30 @@ export class MCPAudioService {
       ...track,
       preview_url: null
     };
+  }
+
+  // fetchTrackWithPreview by ID is tricky with iTunes if we only have a Spotify ID.
+  // if we have an iTunes ID, we can use lookup. But for now, let's just use search.
+  async fetchTrackWithPreview(trackId: string): Promise<PreviewTrack | null> {
+    // Just try to search by ID as a fallback, though it likely won't work well for random IDs
+    // A better approach is to search by metadata if we have it, but here we only have ID.
+    // If the ID is numeric, it might be an iTunes ID.
+
+    const isNumeric = /^\d+$/.test(trackId);
+    if (isNumeric) {
+      // It might be an iTunes ID
+      const endpoint = `?term=${trackId}&limit=1&media=music&entity=song&country=US`; // Term search acts as lookup sometimes
+      // Or use https://itunes.apple.com/lookup?id=...
+      // Let's implement lookup correctly via our proxy if possible.
+      // Our proxy forwards everything query params.
+      // However, our proxy endpoint is /api/itunes -> calls https://itunes.apple.com/search
+      // It does NOT call /lookup.
+      // We might need to stick to search or update proxy.
+      // Since we can't update proxy easily to differentiate, let's just search.
+      // Searching for ID in iTunes usually doesn't work.
+      return null;
+    }
+    return null;
   }
 
   /**
@@ -186,7 +177,8 @@ export class MCPAudioService {
    */
   async isServiceAvailable(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/search?q=test&type=track&limit=1`);
+      // Simple search check
+      const response = await fetch(`${this.baseUrl}?term=test&limit=1`);
       return response.ok;
     } catch {
       return false;
