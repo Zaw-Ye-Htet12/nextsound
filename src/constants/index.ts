@@ -36,6 +36,11 @@ export const sections = [
     type: "top hits 2024",
   },
   {
+    title: "Trending Artists",
+    category: "artist",
+    type: "top hits 2024",
+  },
+  {
     title: "Pop Anthems",
     category: "tracks",
     type: "pop music",

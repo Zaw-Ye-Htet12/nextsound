@@ -59,11 +59,11 @@ class ErrorBoundary extends React.Component<Props, State> {
               We encountered an unexpected error while loading this content.
               Please try again or return to the home page.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={this.handleRetry}
-                className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200"
+                className="px-6 py-2 bg-brand hover:brightness-90 text-white rounded-lg transition-colors duration-200"
               >
                 Try Again
               </button>
@@ -117,7 +117,7 @@ export class APIErrorBoundary extends React.Component<APIErrorBoundaryProps, API
     if (error instanceof APIError || error.name === 'APIError' || error.message.includes('API') || error.message.includes('fetch')) {
       return { hasError: true, error };
     }
-    
+
     // Let other errors bubble up
     throw error;
   }
@@ -141,7 +141,7 @@ export class APIErrorBoundary extends React.Component<APIErrorBoundaryProps, API
     if (this.state.hasError) {
       const error = this.state.error;
       const apiError = error instanceof APIError ? error : null;
-      
+
       // Determine error type and display details
       const getErrorDisplay = () => {
         if (apiError) {
@@ -166,11 +166,11 @@ export class APIErrorBoundary extends React.Component<APIErrorBoundaryProps, API
               return { icon: '📡', title: 'API Error', showRetry: true };
           }
         }
-        
+
         // Fallback for non-APIError instances
         const isNetworkError = error?.message.includes('Network') || error?.message.includes('fetch');
         const isAuthError = error?.message.includes('authentication') || error?.message.includes('401');
-        
+
         return {
           icon: isNetworkError ? '🌐' : isAuthError ? '🔐' : '📡',
           title: isNetworkError ? 'Connection Error' : isAuthError ? 'Authentication Error' : 'API Error',
@@ -180,7 +180,7 @@ export class APIErrorBoundary extends React.Component<APIErrorBoundaryProps, API
 
       const { icon, title, showRetry } = getErrorDisplay();
       const userMessage = apiError?.userMessage || (
-        error?.message.includes('Network') 
+        error?.message.includes('Network')
           ? 'Please check your internet connection and try again.'
           : error?.message.includes('authentication')
             ? 'There was an issue with authentication. Please refresh the page.'
@@ -196,18 +196,18 @@ export class APIErrorBoundary extends React.Component<APIErrorBoundaryProps, API
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             {userMessage}
           </p>
-          
+
           {/* Show retry after delay for rate limited requests */}
           {apiError?.type === ErrorType.RATE_LIMIT && apiError.retryAfter && (
             <p className="text-sm text-gray-500 mb-4">
               Please wait {Math.ceil(apiError.retryAfter / 1000)} seconds before retrying
             </p>
           )}
-          
+
           {showRetry && (
             <button
               onClick={this.handleRetry}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-sm transition-colors duration-200 disabled:bg-gray-400"
+              className="px-4 py-2 bg-brand hover:brightness-90 text-white rounded-sm transition-colors duration-200 disabled:bg-gray-400"
               disabled={!!(apiError?.type === ErrorType.RATE_LIMIT && apiError.retryAfter && apiError.retryAfter > Date.now())}
             >
               {apiError?.type === ErrorType.RATE_LIMIT ? 'Retry After Delay' : 'Retry'}

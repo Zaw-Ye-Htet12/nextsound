@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import * as Avatar from "@radix-ui/react-avatar";
+import { useAuth } from "@/context/AuthContext";
 import { BsMoonStarsFill } from "react-icons/bs";
 import { AiOutlineMenu } from "react-icons/ai";
 import { FiSun } from "react-icons/fi";
@@ -18,9 +20,57 @@ import { navLinks } from "@/constants";
 import { THROTTLE_DELAY } from "@/utils/config";
 import { cn } from "@/utils/helper";
 
+
 interface HeaderProps {
   onOpenSearch?: () => void;
 }
+
+
+const AuthButtons = ({ isNotFoundPage, isActive }: { isNotFoundPage: boolean; isActive: boolean }) => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const buttonClass = cn(
+    "flex items-center justify-center px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105",
+    isNotFoundPage || isActive
+      ? "bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 text-black dark:text-white"
+      : "border border-black backdrop-blur-sm hover:bg-white/20 text-black dark:text-white"
+  );
+
+  if (user) {
+    return (
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Avatar.Root className="w-8 h-8 rounded-full overflow-hidden border border-white/20">
+            <Avatar.Image
+              src={user.user_metadata?.avatar_url}
+              alt={user.user_metadata?.full_name}
+              className="w-full h-full object-cover"
+            />
+            <Avatar.Fallback className="w-full h-full flex items-center justify-center bg-purple-600 text-white text-xs">
+              {user.email?.[0].toUpperCase()}
+            </Avatar.Fallback>
+          </Avatar.Root>
+          <button
+            onClick={signOut}
+            className={cn(
+              "text-sm font-medium hover:underline",
+              isNotFoundPage || isActive ? "text-gray-600 dark:text-gray-300" : "text-gray-300"
+            )}
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <button onClick={() => navigate('/login')} className={buttonClass}>
+      Sign In
+    </button>
+  );
+};
 
 const Header = ({ onOpenSearch }: HeaderProps) => {
   const { openMenu, theme, showThemeOptions } = useTheme();
@@ -67,22 +117,14 @@ const Header = ({ onOpenSearch }: HeaderProps) => {
   return (
     <header
       className={cn(
-        `md:py-[16px] py-[14.5px]  fixed top-0 left-0 w-full z-10 transition-all duration-50`,
+        `md:py-[16px] py-[14.5px]  fixed top-0 left-0 w-full z-50 transition-all duration-50`,
         isActive && (theme === "Dark" ? "header-bg--dark" : "header-bg--light")
       )}
     >
       <nav
         className={cn(maxWidth, `flex justify-between flex-row items-center`)}
       >
-        <Logo
-          logoColor={cn(
-            isNotFoundPage
-              ? "text-black dark:text-white"
-              : !isNotFoundPage && isActive
-              ? "text-black dark:text-white"
-              : "text-white"
-          )}
-        />
+        <Logo />
 
         <div className=" hidden md:flex flex-row gap-8 items-center text-gray-600 dark:text-gray-300">
           <ul className="flex flex-row gap-8 capitalize text-[14.75px] font-medium">
@@ -139,6 +181,8 @@ const Header = ({ onOpenSearch }: HeaderProps) => {
               {showThemeOptions && <ThemeMenu />}
             </AnimatePresence>
           </div>
+
+          <AuthButtons isNotFoundPage={isNotFoundPage} isActive={isActive} />
         </div>
 
         <button

@@ -2,6 +2,7 @@ import { memo, FC, useRef, useState, useEffect } from "react";
 import { useInView } from "framer-motion";
 
 import MusicSlides from "./MusicSlides";
+import ArtistSlides from "./ArtistSlides";
 import MusicGrid from "./MusicGrid";
 import { SkelatonLoader } from "../Loader";
 import Error from "../Error";
@@ -86,10 +87,14 @@ const Section: FC<SectionProps> = ({
             <Error error={String(errorMessage)} className="h-full text-[18px]" />
           ) : (
             <APIErrorBoundary>
-              <MusicSlides
-                tracks={data.results}
-                category={category}
-              />
+              {category === 'artist' ? (
+                <ArtistSlides tracks={data.results} />
+              ) : (
+                <MusicSlides
+                  tracks={data.results}
+                  category={category}
+                />
+              )}
             </APIErrorBoundary>
           )}
         </div>

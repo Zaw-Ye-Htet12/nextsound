@@ -179,7 +179,7 @@ export const TrackCard: React.FC<TrackCardProps> = ({
       {/* Hover glow effect */}
       <div className={cn(
         "absolute -inset-1 bg-gradient-to-r from-spotify-green via-accent-orange to-warning-amber rounded-2xl opacity-0 transition-opacity duration-500 -z-10 blur-md",
-        "dark:bg-gradient-to-r dark:from-blue-800 dark:via-slate-600 dark:to-blue-800",
+        "dark:bg-gradient-to-r dark:from-brand dark:via-red-600 dark:to-brand",
         isHovered && "opacity-10"
       )} />
     </Card>

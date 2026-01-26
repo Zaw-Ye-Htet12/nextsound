@@ -68,7 +68,23 @@ export const useCommandPalette = ({
   } = itunesApi.useSearchMusicQuery(
     {
       query: query.trim(),
-      limit: 8
+      limit: 5,
+      entity: 'song'
+    },
+    {
+      skip: !query.trim()
+    }
+  );
+
+  // Search for Artists
+  const {
+    data: artistSearchData,
+    isLoading: isArtistSearchLoading
+  } = itunesApi.useSearchMusicQuery(
+    {
+      query: query.trim(),
+      limit: 3,
+      entity: 'musicArtist'
     },
     {
       skip: !query.trim()
@@ -157,9 +173,29 @@ export const useCommandPalette = ({
 
   // Transform music search results
   const musicResults: SearchResult[] = useMemo(() => {
+    const results: SearchResult[] = [];
+
+    // Process Artist Results first
+    if (artistSearchData?.results) {
+      results.push(...artistSearchData.results.map((artist: ITrack) => {
+        // Check if it's an exact match
+        const isExact = artist.name.toLowerCase() === query.trim().toLowerCase();
+        return {
+          id: artist.id,
+          type: 'artist' as const,
+          title: artist.name,
+          subtitle: 'Artist',
+          image: artist.poster_path,
+          data: artist,
+          isExactMatch: isExact,
+          action: () => navigate(`/artist/${encodeURIComponent(artist.name)}`)
+        };
+      }));
+    }
+
     if (musicSearchData?.results) {
       // Use iTunes API results
-      return musicSearchData.results.map((track: ITrack) => ({
+      results.push(...musicSearchData.results.map((track: ITrack) => ({
         id: track.id,
         type: 'track' as const,
         title: track.title || track.name || 'Unknown Track',
@@ -167,11 +203,11 @@ export const useCommandPalette = ({
         image: track.poster_path,
         data: track,
         isExactMatch: false
-      }));
+      })));
     }
 
-    return [];
-  }, [musicSearchData]);
+    return results;
+  }, [musicSearchData, artistSearchData, query, navigate]);
 
   // Separate exact matches from recommendations
   const { exactMatches, recommendations } = useMemo(() => {
@@ -210,7 +246,7 @@ export const useCommandPalette = ({
     }
 
     // Execute action based on item type
-    if (item.type === 'command' && item.action) {
+    if (item.action) {
       item.action();
     }
     // Note: Detail page navigation removed - tracks/albums/artists only display on home page
@@ -231,7 +267,7 @@ export const useCommandPalette = ({
   }, [query, searchHistory]);
 
   // Loading state
-  const isLoading = isMusicSearchLoading && query.trim();
+  const isLoading = (isMusicSearchLoading || isArtistSearchLoading) && query.trim();
 
   // Error state
   const searchError = musicSearchError;

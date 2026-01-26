@@ -53,9 +53,18 @@ export const SkelatonLoader: FC<SkelatonLoaderProps> = memo(
   }
 );
 
-export const Loader = memo(() => {
+interface LoaderProps {
+  className?: string;
+  isFullScreen?: boolean;
+}
+
+export const Loader: FC<LoaderProps> = memo(({ className, isFullScreen = true }) => {
+  const containerClass = isFullScreen
+    ? "relative dark:bg-black bg-main-color top-0 left-0 w-screen h-screen flex justify-center items-center"
+    : "relative flex justify-center items-center";
+
   return (
-    <div className="relative dark:bg-black bg-main-color top-0 left-0 w-screen h-screen flex justify-center items-center">
+    <div className={cn(containerClass, className)}>
       <div className="loader" />
     </div>
   );
@@ -78,33 +87,33 @@ export const DetailPageLoader: FC = memo(() => {
         <div className="max-w-[1200px] mx-auto px-4 lg:py-36 sm:py-[136px] sm:pb-28 xs:py-28 xs:pb-12 pt-24 pb-8 flex flex-row lg:gap-12 md:gap-10 gap-8 justify-center">
           {/* Poster Skeleton */}
           <div className="shrink-0">
-            <Skeleton 
-              height={isScreenSmall ? 216 : isScreenMedium ? 280 : 340} 
-              width={isScreenSmall ? 144 : isScreenMedium ? 187 : 227} 
+            <Skeleton
+              height={isScreenSmall ? 216 : isScreenMedium ? 280 : 340}
+              width={isScreenSmall ? 144 : isScreenMedium ? 187 : 227}
               className="rounded-lg"
             />
           </div>
-          
+
           {/* Content Skeleton */}
           <div className="flex-1 max-w-[520px]">
             {/* Title */}
             <Skeleton height={isScreenSmall ? 24 : 32} className="mb-4" />
             <Skeleton height={isScreenSmall ? 24 : 32} width="60%" className="mb-6" />
-            
+
             {/* Genre Pills */}
             <div className="flex flex-row gap-2 mb-6">
               <Skeleton height={24} width={60} className="rounded-full" />
               <Skeleton height={24} width={80} className="rounded-full" />
               <Skeleton height={24} width={70} className="rounded-full" />
             </div>
-            
+
             {/* Overview */}
             <div className="space-y-2 mb-6">
               <Skeleton height={16} />
               <Skeleton height={16} />
               <Skeleton height={16} width="80%" />
             </div>
-            
+
             {/* Cast */}
             <div>
               <Skeleton height={20} width={100} className="mb-3" />
@@ -118,7 +127,7 @@ export const DetailPageLoader: FC = memo(() => {
           </div>
         </div>
       </section>
-      
+
       {/* Videos Section Skeleton */}
       <section className="py-12">
         <div className="max-w-[1200px] mx-auto px-4">
@@ -130,7 +139,7 @@ export const DetailPageLoader: FC = memo(() => {
           </div>
         </div>
       </section>
-      
+
       {/* Similar Content Section Skeleton */}
       <section className="py-12">
         <div className="max-w-[1200px] mx-auto px-4">

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Button } from 'react-aria-components';
+import { Button } from '@/components/ui/button';
 import {
   FiSearch,
   FiMusic,
@@ -147,15 +147,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           />
           {query && (
             <Button
-              onPress={() => setQuery('')}
-              className="ml-2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+              variant="ghost"
+              size="icon"
+              onClick={() => setQuery('')}
+              className="ml-2 h-auto p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-transparent dark:hover:bg-transparent transition-colors duration-200"
             >
               <FiX className="w-4 h-4" />
             </Button>
           )}
           <Button
-            onPress={onClose}
-            className="ml-2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="ml-2 h-auto p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-transparent dark:hover:bg-transparent transition-colors duration-200"
           >
             <kbd className="px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded border">
               ESC
@@ -168,7 +172,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           {/* Loading state */}
           {isLoading && (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+              <div className="animate-spin w-6 h-6 border-2 border-brand border-t-transparent rounded-full"></div>
               <span className="ml-2 text-gray-600 dark:text-gray-400">Searching...</span>
             </div>
           )}
@@ -193,8 +197,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       Recent
                     </h3>
                     <Button
-                      onPress={clearHistory}
-                      className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors duration-200"
+                      variant="ghost"
+                      onClick={clearHistory}
+                      className="flex h-auto items-center gap-1.5 px-2 py-1 text-xs text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-transparent dark:hover:bg-transparent transition-colors duration-200"
                     >
                       <FiTrash2 className="w-3 h-3" />
                       Clear
@@ -237,7 +242,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
                     <div className="space-y-2">
                       <div className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors duration-200">
-                        <FiClock className="w-5 h-5 text-blue-500 mr-3" />
+                        <FiClock className="w-5 h-5 text-brand mr-3" />
                         <div>
                           <div className="font-medium text-gray-900 dark:text-white">Search Music</div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">Find tracks, albums, artists</div>
@@ -253,7 +258,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   </h3>
                   <div className="space-y-2">
                     <div className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors duration-200">
-                      <FiClock className="w-5 h-5 text-blue-500 mr-3" />
+                      <FiClock className="w-5 h-5 text-brand mr-3" />
                       <div>
                         <div className="font-medium text-gray-900 dark:text-white">Search Music</div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">Find tracks, albums, artists</div>
@@ -288,7 +293,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         className={cn(
                           "flex items-center px-4 py-3 cursor-pointer transition-all duration-200",
                           isSelected
-                            ? "bg-blue-50 dark:bg-blue-900/20 border-r-2 border-blue-500"
+                            ? "bg-red-50 dark:bg-red-900/20 border-r-2 border-brand"
                             : "hover:bg-gray-50 dark:hover:bg-gray-800"
                         )}
                         onClick={() => handleItemSelect(item)}
@@ -323,7 +328,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                           <span className={cn(
                             "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium",
                             item.type === 'track' && "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
-                            item.type === 'album' && "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
+                            item.type === 'album' && "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
                             item.type === 'artist' && "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400",
                             item.type === 'playlist' && "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400",
                             item.type === 'command' && "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
@@ -344,7 +349,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         {/* Play button for tracks */}
                         {item.type === 'track' && isSelected && (
                           <div className="ml-2 shrink-0">
-                            <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center">
+                            <div className="w-6 h-6 bg-brand text-white rounded-full flex items-center justify-center">
                               <FiMusic className="w-3 h-3" />
                             </div>
                           </div>
@@ -389,7 +394,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         className={cn(
                           "flex items-center px-4 py-3 cursor-pointer transition-all duration-200",
                           isSelected
-                            ? "bg-blue-50 dark:bg-blue-900/20 border-r-2 border-blue-500"
+                            ? "bg-red-50 dark:bg-red-900/20 border-r-2 border-brand"
                             : "hover:bg-gray-50 dark:hover:bg-gray-800"
                         )}
                         onClick={() => handleItemSelect(item)}
@@ -424,7 +429,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                           <span className={cn(
                             "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium",
                             item.type === 'track' && "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
-                            item.type === 'album' && "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
+                            item.type === 'album' && "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
                             item.type === 'artist' && "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400",
                             item.type === 'playlist' && "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400",
                             item.type === 'command' && "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
@@ -445,7 +450,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         {/* Play button for tracks */}
                         {item.type === 'track' && isSelected && (
                           <div className="ml-2 shrink-0">
-                            <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center">
+                            <div className="w-6 h-6 bg-brand text-white rounded-full flex items-center justify-center">
                               <FiMusic className="w-3 h-3" />
                             </div>
                           </div>

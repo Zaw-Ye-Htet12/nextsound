@@ -24,7 +24,7 @@ const Error = ({ className = "h-screen", error, onRetry, showRetry = false }: Er
         {showRetry && onRetry && (
           <button
             onClick={onRetry}
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 font-medium"
+            className="px-4 py-2 bg-brand hover:brightness-90 text-white rounded-lg transition-colors duration-200 font-medium"
           >
             Try Again
           </button>

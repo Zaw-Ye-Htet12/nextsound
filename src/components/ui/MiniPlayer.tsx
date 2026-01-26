@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from './button';
+import { TrackDetailsDialog } from './TrackDetailsDialog';
 import {
   FiPlay,
   FiPause,
@@ -13,7 +14,8 @@ import {
   FiList,
   FiMoreHorizontal,
   FiMinimize2,
-  FiMaximize2
+  FiMaximize2,
+  FiExternalLink
 } from 'react-icons/fi';
 import { ITrack } from '@/types';
 import { getImageUrl, cn } from '@/utils';
@@ -64,6 +66,7 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
   isFavorite = false,
 }) => {
   const [isMuted, setIsMuted] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isDragging] = useState(false);
   const [localProgress, setLocalProgress] = useState(progress);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
@@ -144,7 +147,7 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
             onClick={onTogglePlay}
             variant="ghost"
             size="icon"
-            className="flex items-center justify-center w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors duration-200"
+            className="flex items-center justify-center w-8 h-8 bg-brand hover:brightness-90 text-white rounded-full transition-colors duration-200"
           >
             {isPlaying ? <FiPause className="w-4 h-4" /> : <FiPlay className="w-4 h-4 ml-0.5" />}
           </Button>
@@ -173,17 +176,20 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
         onClick={handleProgressClick}
       >
         <div
-          className="h-full bg-blue-600 transition-all duration-100 rounded-full relative group-hover:bg-blue-500"
+          className="h-full bg-brand transition-all duration-100 rounded-full relative group-hover:brightness-110"
           style={{ width: `${localProgress}%` }}
         >
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 -mr-1.5"></div>
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-brand rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 -mr-1.5"></div>
         </div>
       </div>
 
       <div className="flex items-center justify-between px-4 py-3">
         {/* Track info */}
         <div className="flex items-center space-x-3 min-w-0 flex-1">
-          <div className="relative">
+          <div
+            className="relative cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => setIsDetailsOpen(true)}
+          >
             <img
               src={getImageUrl(currentTrack.poster_path)}
               alt={currentTrack.title || currentTrack.name}
@@ -200,11 +206,14 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
             )}
           </div>
 
-          <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-gray-900 dark:text-white truncate text-sm">
+          <div
+            className="min-w-0 flex-1 cursor-pointer group"
+            onClick={() => setIsDetailsOpen(true)}
+          >
+            <h3 className="font-semibold text-gray-900 dark:text-white truncate text-sm group-hover:underline">
               {currentTrack.title || currentTrack.name || 'Unknown Track'}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 truncate text-xs">
+            <p className="text-gray-600 dark:text-gray-400 truncate text-xs group-hover:text-brand transition-colors">
               {currentTrack.artist || 'Unknown Artist'}
             </p>
           </div>
@@ -222,6 +231,18 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
           >
             <FiHeart className={cn("w-4 h-4", isFavorite && "fill-current")} />
           </Button>
+
+          {currentTrack.external_urls?.spotify && (
+            <Button
+              onClick={() => window.open(currentTrack.external_urls?.spotify, '_blank')}
+              variant="ghost"
+              size="icon"
+              className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-green-500 dark:text-gray-500 hover:scale-110 transition-all duration-200"
+              title="Listen on Spotify/Apple Music"
+            >
+              <FiExternalLink className="w-4 h-4" />
+            </Button>
+          )}
         </div>
 
         {/* Main controls */}
@@ -233,7 +254,7 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
             className={cn(
               "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 hover:scale-110",
               isShuffled
-                ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20"
+                ? "text-brand bg-red-50 dark:bg-red-900/20"
                 : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             )}
           >
@@ -278,13 +299,13 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
             className={cn(
               "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 hover:scale-110 relative",
               repeatMode !== 'off'
-                ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20"
+                ? "text-brand bg-red-50 dark:bg-red-900/20"
                 : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             )}
           >
             <FiRepeat className="w-4 h-4" />
             {repeatMode === 'one' && (
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center font-bold">1</span>
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-brand text-white text-xs rounded-full flex items-center justify-center font-bold">1</span>
             )}
           </Button>
         </div>
@@ -335,7 +356,7 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
                   </div>
                   <div className="flex-1 w-1.5 bg-gray-200 dark:bg-gray-700 rounded-full relative overflow-hidden">
                     <div
-                      className="w-full bg-blue-600 absolute bottom-0 transition-all duration-75"
+                      className="w-full bg-brand absolute bottom-0 transition-all duration-75"
                       style={{ height: `${volume}%` }}
                     />
                   </div>
@@ -365,6 +386,11 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
           </Button>
         </div>
       </div>
+      <TrackDetailsDialog
+        track={currentTrack}
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+      />
     </div>
   );
 };

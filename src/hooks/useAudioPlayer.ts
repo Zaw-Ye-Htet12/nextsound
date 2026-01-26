@@ -50,8 +50,20 @@ export const useAudioPlayer = () => {
         }
 
         if (prev.queue.length > 0) {
-          const nextTrack = prev.queue[0];
-          const newQueue = prev.queue.slice(1);
+          let nextTrack;
+          let newQueue;
+
+          if (prev.isShuffled) {
+            // Shuffle mode: pick a random track from the queue
+            const randomIndex = Math.floor(Math.random() * prev.queue.length);
+            nextTrack = prev.queue[randomIndex];
+            newQueue = prev.queue.filter((_, index) => index !== randomIndex);
+          } else {
+            // Normal mode: pick the first track
+            nextTrack = prev.queue[0];
+            newQueue = prev.queue.slice(1);
+          }
+
           return {
             ...prev,
             currentTrack: nextTrack,
@@ -293,8 +305,18 @@ export const useAudioPlayer = () => {
   const skipNext = useCallback(() => {
     setState(prev => {
       if (prev.queue.length > 0) {
-        const nextTrack = prev.queue[0];
-        const newQueue = prev.queue.slice(1);
+        let nextTrack;
+        let newQueue;
+
+        if (prev.isShuffled) {
+          const randomIndex = Math.floor(Math.random() * prev.queue.length);
+          nextTrack = prev.queue[randomIndex];
+          newQueue = prev.queue.filter((_, index) => index !== randomIndex);
+        } else {
+          nextTrack = prev.queue[0];
+          newQueue = prev.queue.slice(1);
+        }
+
         return {
           ...prev,
           currentTrack: nextTrack,
