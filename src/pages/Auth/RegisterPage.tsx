@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 
+
 /* =========================
    Validation Schema
 ========================= */
@@ -24,6 +25,10 @@ const passwordSchema = z
     .regex(/[A-Z]/, 'Must include at least one uppercase letter')
     .regex(/[a-z]/, 'Must include at least one lowercase letter')
     .regex(/[0-9]/, 'Must include at least one number');
+
+/* =========================
+   Component
+========================= */
 
 const signUpSchema = z
     .object({
@@ -37,19 +42,15 @@ const signUpSchema = z
         path: ['confirmPassword'],
     });
 
-type SignUpFormValues = z.infer<typeof signUpSchema>;
-
-/* =========================
-   Component
-========================= */
-
 const RegisterPage = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [otp, setOtp] = useState('');
 
-    const form = useForm<SignUpFormValues>({
+    const form = useForm<z.infer<typeof signUpSchema>>({
         resolver: zodResolver(signUpSchema),
         mode: 'onSubmit',
         defaultValues: {
@@ -60,15 +61,7 @@ const RegisterPage = () => {
         },
     });
 
-    const password = form.watch('password');
-    const confirmPassword = form.watch('confirmPassword');
-
-    const passwordsMatch =
-        password.length > 0 &&
-        confirmPassword.length > 0 &&
-        password === confirmPassword;
-
-    const onSubmit = async (data: SignUpFormValues) => {
+    const onSubmit = async (data: z.infer<typeof signUpSchema>) => {
         setLoading(true);
         try {
             const { error } = await supabase.auth.signUp({
@@ -86,10 +79,35 @@ const RegisterPage = () => {
 
             if (error) throw error;
 
-            toast.success('Account created! Please check your email to confirm.');
-            navigate('/login');
+            toast.success('Account created! Enter the 6-digit code sent to your email.');
+            setIsVerifying(true);
         } catch (err: any) {
             toast.error(err.message || 'An error occurred during sign up');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleVerifyOtp = async () => {
+        if (!otp) {
+            toast.error('Please enter the OTP code');
+            return;
+        }
+        setLoading(true);
+        try {
+            const { error } = await supabase.auth.verifyOtp({
+                email: form.getValues('email'),
+                token: otp,
+                type: 'signup',
+            });
+
+            if (error) throw error;
+
+            toast.success('Account verified successfully!');
+            navigate('/login');
+        } catch (err: any) {
+            console.error('OTP verification error:', err);
+            toast.error(err.message || 'Invalid OTP code');
         } finally {
             setLoading(false);
         }
@@ -115,6 +133,84 @@ const RegisterPage = () => {
         }
     };
 
+    if (isVerifying) {
+        return (
+            <div className="flex items-center justify-center px-4 min-h-screen pt-20 pb-24">
+                <div className="w-full max-w-md p-8 space-y-6 bg-white/5 dark:bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
+                    <div className="space-y-2 text-center">
+                        <h1 className="text-3xl font-bold bg-gradient-to-r from-brand to-red-600 bg-clip-text text-transparent">
+                            Verify Email
+                        </h1>
+                        <p className="text-gray-500 dark:text-gray-400">
+                            Enter the code sent to {form.getValues('email')}
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <FieldLabel htmlFor="otp-input" className="dark:text-white">
+                                OTP Code
+                            </FieldLabel>
+                            <Input
+                                id="otp-input"
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value)}
+                                placeholder="Enter 6-digit code"
+                                className="text-center text-xl tracking-widest bg-white/50 dark:bg-black/20 border-gray-200 dark:border-white/10 focus-visible:ring-brand dark:text-white"
+                                maxLength={6}
+                                autoComplete="one-time-code"
+                            />
+                        </div>
+
+                        <Button
+                            type="button"
+                            onClick={handleVerifyOtp}
+                            disabled={loading || otp.length < 6}
+                            className="w-full bg-gradient-to-r from-brand to-red-600 text-white hover:opacity-90 transition-all font-medium"
+                        >
+                            {loading ? <Loader className="w-5 h-5 border-2 scale-50" isFullScreen={false} /> : 'Verify Account'}
+                        </Button>
+
+                        <div className="text-center text-sm">
+                            <span className="text-gray-500 dark:text-gray-400">Didn't receive code? </span>
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    setLoading(true);
+                                    try {
+                                        const { error } = await supabase.auth.resend({
+                                            type: 'signup',
+                                            email: form.getValues('email'),
+                                        });
+                                        if (error) throw error;
+                                        toast.success('Verification code resent! Check your email.');
+                                    } catch (err: any) {
+                                        toast.error(err.message || 'Failed to resend code');
+                                    } finally {
+                                        setLoading(false);
+                                    }
+                                }}
+                                disabled={loading}
+                                className="text-brand hover:text-red-600 font-medium hover:underline disabled:opacity-50 transition-colors"
+                            >
+                                Resend
+                            </button>
+                        </div>
+
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setIsVerifying(false)}
+                            className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-brand dark:hover:text-red-400"
+                        >
+                            Back to Sign Up
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="flex items-center justify-center px-4 min-h-screen pt-20 pb-24">
             <div className="w-full max-w-md p-8 space-y-6 bg-white/5 dark:bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
@@ -136,8 +232,8 @@ const RegisterPage = () => {
                         control={form.control}
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel htmlFor="fullName">Full Name</FieldLabel>
-                                <Input {...field} id="fullName" placeholder="John Doe" />
+                                <FieldLabel htmlFor="fullName" className="dark:text-white">Full Name</FieldLabel>
+                                <Input {...field} id="fullName" placeholder="John Doe" className="dark:text-white" />
                                 {fieldState.error && <FieldError errors={[fieldState.error]} />}
                             </Field>
                         )}
@@ -149,8 +245,8 @@ const RegisterPage = () => {
                         control={form.control}
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel htmlFor="email">Email</FieldLabel>
-                                <Input {...field} id="email" placeholder="example@gmail.com" />
+                                <FieldLabel htmlFor="email" className="dark:text-white">Email</FieldLabel>
+                                <Input {...field} id="email" placeholder="example@gmail.com" className="dark:text-white" />
                                 {fieldState.error && <FieldError errors={[fieldState.error]} />}
                             </Field>
                         )}
@@ -162,7 +258,7 @@ const RegisterPage = () => {
                         control={form.control}
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel htmlFor="password">Password</FieldLabel>
+                                <FieldLabel htmlFor="password" className="dark:text-white">Password</FieldLabel>
 
                                 <div className="relative">
                                     <Input
@@ -170,7 +266,7 @@ const RegisterPage = () => {
                                         id="password"
                                         type={showPassword ? 'text' : 'password'}
                                         autoComplete="new-password"
-                                        className="pr-10"
+                                        className="pr-10 dark:text-white"
                                     />
                                     <button
                                         type="button"
@@ -193,7 +289,7 @@ const RegisterPage = () => {
                         control={form.control}
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
+                                <FieldLabel htmlFor="confirmPassword" className="dark:text-white">Confirm Password</FieldLabel>
 
                                 <div className="relative">
                                     <Input
@@ -201,7 +297,7 @@ const RegisterPage = () => {
                                         id="confirmPassword"
                                         type={showConfirmPassword ? 'text' : 'password'}
                                         autoComplete="new-password"
-                                        className="pr-10"
+                                        className="pr-10 dark:text-white"
                                     />
                                     <button
                                         type="button"

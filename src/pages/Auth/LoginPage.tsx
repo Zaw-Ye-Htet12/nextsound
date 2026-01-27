@@ -90,7 +90,7 @@ const LoginPage = () => {
                             control={form.control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor="form-rhf-demo-title">
+                                    <FieldLabel htmlFor="form-rhf-demo-title" className="dark:text-white">
                                         Email
                                     </FieldLabel>
                                     <Input
@@ -99,6 +99,7 @@ const LoginPage = () => {
                                         aria-invalid={fieldState.invalid}
                                         placeholder="example@gmail.com"
                                         autoComplete="off"
+                                        className="dark:text-white"
                                     />
                                     {fieldState.invalid && (
                                         <FieldError errors={[fieldState.error]} />
@@ -112,7 +113,7 @@ const LoginPage = () => {
                             control={form.control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor="password-input">
+                                    <FieldLabel htmlFor="password-input" className="dark:text-white">
                                         Password
                                     </FieldLabel>
                                     <div className="relative">
@@ -122,7 +123,7 @@ const LoginPage = () => {
                                             aria-invalid={fieldState.invalid}
                                             type={showPassword ? "text" : "password"}
                                             autoComplete="off"
-                                            className="pr-10"
+                                            className="pr-10 dark:text-white"
                                         />
                                         <button
                                             type="button"
