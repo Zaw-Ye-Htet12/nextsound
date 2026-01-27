@@ -236,6 +236,7 @@ export const useAudioPlayer = () => {
       }, 250);
     }
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.currentTrack]); // Only run when track object changes
 
   const playTrack = useCallback(async (track: ITrack) => {
@@ -295,6 +296,7 @@ export const useAudioPlayer = () => {
         simulationInterval.current = null;
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.isPlaying, state.currentTrack?.preview_url]); // Re-run if source availability changes
 
   const togglePlay = useCallback(() => {

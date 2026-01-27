@@ -39,7 +39,7 @@ export const useGetTracksQuery = (
   },
   options?: { skip?: boolean }
 ) => {
-  const { category, type, searchQuery, showSimilarTracks } = args;
+  const { type, searchQuery, showSimilarTracks } = args;
   const { skip = false } = options || {};
 
   // Handle search queries

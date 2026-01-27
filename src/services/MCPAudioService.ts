@@ -125,7 +125,7 @@ export class MCPAudioService {
     const isNumeric = /^\d+$/.test(trackId);
     if (isNumeric) {
       // It might be an iTunes ID
-      const endpoint = `?term=${trackId}&limit=1&media=music&entity=song&country=US`; // Term search acts as lookup sometimes
+      // const endpoint = `?term=${trackId}&limit=1&media=music&entity=song&country=US`; // Term search acts as lookup sometimes
       // Or use https://itunes.apple.com/lookup?id=...
       // Let's implement lookup correctly via our proxy if possible.
       // Our proxy forwards everything query params.

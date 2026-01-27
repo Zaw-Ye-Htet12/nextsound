@@ -3,7 +3,6 @@ import { useInView } from "framer-motion";
 
 import MusicSlides from "./MusicSlides";
 import ArtistSlides from "./ArtistSlides";
-import MusicGrid from "./MusicGrid";
 import { SkelatonLoader } from "../Loader";
 import Error from "../Error";
 import ErrorBoundary, { APIErrorBoundary } from "../ErrorBoundary";
@@ -30,7 +29,6 @@ const Section: FC<SectionProps> = ({
   showSimilarTracks,
 }) => {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [allTracks, setAllTracks] = useState<ITrack[]>([]);
 
   const inView = useInView(ref, {
     margin: "420px",
@@ -57,11 +55,7 @@ const Section: FC<SectionProps> = ({
   );
 
   // Handle data when it arrives
-  useEffect(() => {
-    if (data?.results && data.results.length > 0) {
-      setAllTracks(data.results);
-    }
-  }, [data]);
+
 
 
   const errorMessage = isError ? getErrorMessage(error) : "";

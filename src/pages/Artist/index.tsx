@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSearchMusicQuery } from '@/services/ItunesAPI';
-import { Loader, Error, Section } from '@/common';
-import { FiChevronLeft, FiPlay, FiShare2 } from 'react-icons/fi';
+import { Loader, Error } from '@/common';
+import { FiChevronLeft, FiPlay } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { getImageUrl } from '@/utils';
 import { useAudioPlayerContext } from '@/context/audioPlayerContext';

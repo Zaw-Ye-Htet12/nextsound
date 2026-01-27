@@ -11,7 +11,7 @@ import {
 import { ITrack } from '@/types';
 import { getImageUrl } from '@/utils';
 import { Button } from './button';
-import { FiExternalLink, FiCalendar, FiMusic, FiUser, FiDisc, FiClock } from 'react-icons/fi';
+import { FiExternalLink, FiCalendar, FiMusic, FiDisc, FiClock } from 'react-icons/fi';
 
 interface TrackDetailsDialogProps {
     track: ITrack | null;

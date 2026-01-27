@@ -12,7 +12,6 @@ import {
   FiRepeat,
   FiHeart,
   FiList,
-  FiMoreHorizontal,
   FiMinimize2,
   FiMaximize2,
   FiExternalLink
