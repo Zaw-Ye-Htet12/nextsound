@@ -5,14 +5,14 @@ import {
   USE_BACKEND_PROXY
 } from "@/utils/config";
 import { cacheHelpers, networkHelpers } from "@/utils/offlineCache";
-import { 
-  SpotifyTrack, 
-  SpotifyAlbum, 
-  SpotifyArtist, 
+import {
+  SpotifyTrack,
+  SpotifyAlbum,
+  SpotifyArtist,
   SpotifyPlaylist,
   ITrack,
   IAlbum,
-  IArtist 
+  IArtist
 } from "@/types";
 
 // Spotify API response interfaces
@@ -47,7 +47,7 @@ interface SpotifySearchResponse {
 // Enhanced error types based on PRD specifications
 enum ErrorType {
   NETWORK_ERROR = 'network_error',
-  CORS_ERROR = 'cors_error', 
+  CORS_ERROR = 'cors_error',
   AUTH_ERROR = 'auth_error',
   RATE_LIMIT = 'rate_limit',
   DATA_ERROR = 'data_error',
@@ -68,12 +68,14 @@ interface APIError {
 }
 
 // Token cache
+/*
 interface TokenCache {
   token: string;
   expiresAt: number;
 }
 
 let tokenCache: TokenCache | null = null;
+*/
 
 // Retry configuration based on PRD specifications
 const RETRY_CONFIG = {
@@ -100,9 +102,12 @@ const CACHE_DURATIONS = {
 // Helper function to get Spotify access token (Client Credentials Flow)
 const getSpotifyToken = async (): Promise<string> => {
   // Check if we have a valid cached token
+  /* 
+  // TODO: Re-enable properly when token fetching is implemented
   if (tokenCache && Date.now() < tokenCache.expiresAt) {
     return tokenCache.token;
   }
+  */
 
   if (!SPOTIFY_CLIENT_ID) {
     throw new APIError({
@@ -136,12 +141,12 @@ class APIError extends Error {
   public retryAfter?: number;
   public context?: any;
 
-  constructor(options: { 
-    type: ErrorType; 
-    status: number; 
-    message: string; 
+  constructor(options: {
+    type: ErrorType;
+    status: number;
+    message: string;
     userMessage?: string;
-    code: string; 
+    code: string;
     retryable: boolean;
     retryAfter?: number;
     context?: any;
@@ -229,7 +234,7 @@ const transformSpotifyArtist = (artist: SpotifyArtist): IArtist => ({
 });
 
 // Create base query with retry logic
-const baseQuery = fetchBaseQuery({ 
+const baseQuery = fetchBaseQuery({
   baseUrl: SPOTIFY_API_BASE_URL,
   prepareHeaders: async (headers) => {
     // Only handle authentication if not using backend proxy
@@ -252,18 +257,18 @@ const baseQuery = fetchBaseQuery({
     if (!response.ok) {
       const contentType = response.headers.get('content-type');
       let errorData;
-      
+
       if (contentType && contentType.includes('application/json')) {
         errorData = await response.json();
       } else {
         errorData = await response.text();
       }
-      
+
       const retryAfter = response.headers.get('retry-after');
       throw new APIError({
         type: response.status === 429 ? ErrorType.RATE_LIMIT :
-              response.status >= 500 ? ErrorType.SERVER_ERROR :
-              response.status >= 400 ? ErrorType.CLIENT_ERROR : ErrorType.NETWORK_ERROR,
+          response.status >= 500 ? ErrorType.SERVER_ERROR :
+            response.status >= 400 ? ErrorType.CLIENT_ERROR : ErrorType.NETWORK_ERROR,
         status: response.status,
         message: typeof errorData === 'string' ? errorData : errorData?.error?.message || 'API request failed',
         code: (typeof errorData === 'object' && errorData?.error?.status) || `HTTP_${response.status}`,
@@ -272,7 +277,7 @@ const baseQuery = fetchBaseQuery({
         context: { errorData, url: response.url }
       });
     }
-    
+
     return response.json();
   },
 });
@@ -281,45 +286,45 @@ const baseQuery = fetchBaseQuery({
 // Note: RTK Query's retry is complex, so we'll implement retry at the custom base query level
 const baseQueryWithRetry = async (args: any, api: any, extraOptions: any) => {
   let lastError: any;
-  
+
   for (let attempt = 1; attempt <= RETRY_CONFIG.maxRetries + 1; attempt++) {
     try {
       const result = await baseQuery(args, api, extraOptions);
       return result;
     } catch (error) {
       lastError = error;
-      
+
       // Check if we should retry
       const apiError = error as APIError;
-      const isRetryable = apiError instanceof APIError 
+      const isRetryable = apiError instanceof APIError
         ? RETRY_CONFIG.retryableErrors.includes(apiError.type) && apiError.retryable
         : false;
-      
+
       // Don't retry on last attempt or if error is not retryable
       if (attempt > RETRY_CONFIG.maxRetries || !isRetryable) {
         throw error;
       }
-      
+
       // Calculate delay for exponential backoff
       const delay = Math.min(
         RETRY_CONFIG.baseDelay * Math.pow(RETRY_CONFIG.backoffFactor, attempt - 1),
         RETRY_CONFIG.maxDelay
       );
-      
+
       // Add small random jitter to prevent thundering herd
       const jitter = delay * 0.1 * Math.random();
       const totalDelay = Math.floor(delay + jitter);
-      
+
       // For rate limit errors, respect retry-after header
-      const retryDelay = apiError?.type === ErrorType.RATE_LIMIT && apiError.retryAfter 
-        ? apiError.retryAfter 
+      const retryDelay = apiError?.type === ErrorType.RATE_LIMIT && apiError.retryAfter
+        ? apiError.retryAfter
         : totalDelay;
-      
+
       console.log(`Retrying request (attempt ${attempt}/${RETRY_CONFIG.maxRetries}) after ${retryDelay}ms delay`);
       await new Promise(resolve => setTimeout(resolve, retryDelay));
     }
   }
-  
+
   // This should never be reached, but just in case
   throw lastError;
 };
@@ -329,13 +334,13 @@ const baseQueryWithOfflineSupport = async (args: any, api: any, extraOptions: an
   try {
     // First, try the network request
     const result = await baseQueryWithRetry(args, api, extraOptions);
-    
+
     // If successful, cache the result for offline use
     if (result.data) {
       const endpoint = args.url || args;
       cacheResultByEndpoint(endpoint, result.data, args);
     }
-    
+
     return result;
   } catch (error) {
     // If network request fails and we're offline, try cache
@@ -343,13 +348,13 @@ const baseQueryWithOfflineSupport = async (args: any, api: any, extraOptions: an
       console.log('Network unavailable or server error, checking cache...');
       const endpoint = args.url || args;
       const cachedData = getCachedResultByEndpoint(endpoint, args);
-      
+
       if (cachedData) {
         console.log('Serving cached data for:', endpoint);
         return { data: cachedData };
       }
     }
-    
+
     // If no cache available, throw the original error
     throw error;
   }
@@ -428,20 +433,20 @@ const getCachedResultByEndpoint = (endpoint: string, args: any): any => {
 export const spotifyApi = createApi({
   reducerPath: "spotifyApi",
   baseQuery: baseQueryWithOfflineSupport,
-  
+
   // Intelligent caching with content-aware durations
   tagTypes: ['Track', 'Album', 'Artist', 'Search'],
   keepUnusedDataFor: 30 * 60, // Default 30 minutes (in seconds)
 
   endpoints: (builder) => ({
     // Search for music content
-    searchMusic: builder.query<{results: ITrack[]}, {
+    searchMusic: builder.query<{ results: ITrack[] }, {
       query: string;
       type: 'track' | 'album' | 'artist' | 'playlist';
       limit?: number;
       offset?: number;
     }>({
-      query: ({ query, type, limit = 20, offset = 0 }) => 
+      query: ({ query, type, limit = 20, offset = 0 }) =>
         `search?q=${encodeURIComponent(query)}&type=${type}&limit=${limit}&offset=${offset}&market=US`,
       keepUnusedDataFor: CACHE_DURATIONS.search_results,
       providesTags: (result, error, { query, type, limit }) => [
@@ -570,8 +575,8 @@ export const spotifyApi = createApi({
       },
       keepUnusedDataFor: CACHE_DURATIONS.artist_details,
       providesTags: (result, error, { id }) => [{ type: 'Artist', id }],
-      transformResponse: (response: SpotifyArtist & { 
-        images?: Array<{ height: number; url: string; width: number }>; 
+      transformResponse: (response: SpotifyArtist & {
+        images?: Array<{ height: number; url: string; width: number }>;
         genres?: string[];
         followers?: { total: number };
         popularity?: number;
