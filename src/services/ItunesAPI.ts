@@ -2,11 +2,11 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { ITrack } from "@/types";
 
+import { USE_BACKEND_PROXY, PROXY_SERVER_URL } from "@/utils/config";
+
 // iTunes API Configuration
 // We use the proxy server to avoid CORS issues if possible, or fallback to direct
-// Actually, using the proxy we just set up is the most reliable method.
-const USE_PROXY = true;
-const BASE_URL = USE_PROXY ? 'http://localhost:3001/api' : 'https://itunes.apple.com';
+const BASE_URL = USE_BACKEND_PROXY ? `${PROXY_SERVER_URL}/api` : 'https://itunes.apple.com';
 
 // Interface for iTunes response
 interface ItunesResponse {
@@ -61,7 +61,7 @@ export const itunesApi = createApi({
     endpoints: (builder) => ({
         searchMusic: builder.query<{ results: ITrack[] }, { query: string, limit?: number, entity?: string }>({
             query: ({ query, limit = 25, entity = 'song' }) => ({
-                url: USE_PROXY ? '/itunes' : '/search', // If using proxy, path is /itunes
+                url: USE_BACKEND_PROXY ? '/itunes' : '/search', // If using proxy, path is /itunes
                 params: {
                     term: query,
                     limit: limit,
