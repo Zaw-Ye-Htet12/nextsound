@@ -39,6 +39,24 @@ interface HeaderProps {
 const AuthButtons = ({ isNotFoundPage, isActive }: { isNotFoundPage: boolean; isActive: boolean }) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Close dropdown on resize to mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  if (location.pathname === '/update-password') {
+    return null;
+  }
 
   const buttonClass = cn(
     "flex items-center justify-center px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 border border-primary",
@@ -47,16 +65,10 @@ const AuthButtons = ({ isNotFoundPage, isActive }: { isNotFoundPage: boolean; is
       : "border border-black backdrop-blur-sm hover:bg-white/20 text-black dark:text-white"
   );
 
-  const location = useLocation();
-
-  if (location.pathname === '/update-password') {
-    return null;
-  }
-
   if (user) {
     return (
       <div className="flex items-center gap-4">
-        <DropdownMenu>
+        <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={false}>
           <DropdownMenuTrigger asChild>
             <Avatar.Root
               className="h-8 w-8 rounded-full overflow-hidden border border-white/20 hover:opacity-80 transition-opacity cursor-pointer outline-none"

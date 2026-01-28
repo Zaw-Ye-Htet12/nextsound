@@ -11,7 +11,7 @@ const Library: FC = () => {
     const [activeTab, setActiveTab] = useState<'songs' | 'artists'>('songs');
 
     return (
-        <div className="flex flex-col relative w-full min-h-screen mt-16">
+        <div className="max-w-6xl mx-auto flex flex-col relative w-full min-h-screen mt-16">
             {/* Header Section */}
             <div className="flex flex-col mb-6 px-4 pt-6">
                 <div className="flex items-center gap-3 mb-2">

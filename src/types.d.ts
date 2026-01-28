@@ -93,6 +93,7 @@ export interface ITrack {
   year?: number; // Release year for search
   // Legacy properties for backward compatibility
   title?: string;
+  artist_image?: string; // artist profile image
 }
 
 export interface IAlbum {

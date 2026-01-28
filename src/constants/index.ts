@@ -1,5 +1,5 @@
 import { FiSun } from "react-icons/fi";
-import { BsMoonStarsFill } from "react-icons/bs";
+import { BsMoonStarsFill, BsMusicNoteBeamed, BsPeopleFill } from "react-icons/bs";
 import { AiOutlineHome } from "react-icons/ai";
 
 import { ITheme, INavLink } from "../types";
@@ -10,12 +10,16 @@ export const navLinks: INavLink[] = [
     path: "/",
     icon: AiOutlineHome,
   },
-  //   {
-  //     title: "library",
-  //     path: "/library",
-  //     icon: AiOutlineHome, 
-  //   },
-
+  {
+    title: "artists",
+    path: "/artists",
+    icon: BsPeopleFill,
+  },
+  {
+    title: "musics",
+    path: "/musics",
+    icon: BsMusicNoteBeamed,
+  },
 ];
 
 export const themeOptions: ITheme[] = [

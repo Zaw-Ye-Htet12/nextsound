@@ -1,3 +1,4 @@
+
 import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
@@ -25,7 +26,7 @@ app.use(cors({
 app.use(express.json());
 
 // iTunes API proxy endpoint (No credentials needed!)
-app.use('/api/itunes', async (req, res) => {
+app.get('/api/itunes', async (req, res) => {
   try {
     const itunesUrl = 'https://itunes.apple.com/search';
     console.log(`Proxying iTunes request:`, req.query);
@@ -49,6 +50,88 @@ app.use('/api/itunes', async (req, res) => {
   }
 });
 
+// Deezer Generic Search (Tracks) Proxy
+// Must match this specific path
+app.get('/api/deezer/search', async (req, res) => {
+  try {
+    const deezerUrl = 'https://api.deezer.com/search';
+    console.log(`Proxying Deezer Search request:`, req.query);
+
+    const response = await axios.get(deezerUrl, {
+      params: {
+        q: req.query.q,
+        limit: req.query.limit || 10
+      },
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Deezer Search Proxy error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch from Deezer Search' });
+  }
+});
+
+// Deezer Artists by Genre Proxy
+app.get('/api/deezer/genre/:id/artists', async (req, res) => {
+  try {
+    const genreId = req.params.id;
+    const deezerUrl = `https://api.deezer.com/genre/${genreId}/artists`;
+    console.log(`Proxying Deezer Genre Artists request:`, genreId);
+
+    const response = await axios.get(deezerUrl, {
+      params: {
+        limit: req.query.limit || 50
+      },
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Deezer Genre Proxy error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch artists by genre' });
+  }
+});
+
+// Deezer API proxy endpoint (Artist Search)
+app.get('/api/deezer', async (req, res) => {
+  try {
+    const deezerUrl = 'https://api.deezer.com/search/artist';
+    console.log(`Proxying Deezer request:`, req.query);
+
+    const response = await axios.get(deezerUrl, {
+      params: {
+        q: req.query.q,
+        limit: req.query.limit || 10
+      },
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Deezer Proxy error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch from Deezer' });
+  }
+});
+
+// 404 handler
+app.use((req, res, next) => {
+  // Check if we already sent a response (e.g. from previous routes), though app.use shouldn't be reached if res.json() was called.
+  // But just in case.
+  res.status(404).json({
+    error: {
+      status: 404,
+      message: 'Endpoint not found'
+    }
+  });
+});
+
 // Catch-all error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
@@ -60,21 +143,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    error: {
-      status: 404,
-      message: 'Endpoint not found'
-    }
-  });
-});
-
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Music Proxy Server running on port ${PORT}`);
   console.log(`📡 Health check: http://localhost:${PORT}/health`);
   console.log(`🎵 iTunes endpoint: http://localhost:${PORT}/api/itunes`);
+  console.log(`🎵 Deezer endpoint: http://localhost:${PORT}/api/deezer`);
 });
 
 // Graceful shutdown
