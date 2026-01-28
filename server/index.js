@@ -143,13 +143,17 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Music Proxy Server running on port ${PORT}`);
-  console.log(`📡 Health check: http://localhost:${PORT}/health`);
-  console.log(`🎵 iTunes endpoint: http://localhost:${PORT}/api/itunes`);
-  console.log(`🎵 Deezer endpoint: http://localhost:${PORT}/api/deezer`);
-});
+// Start server if running directly
+if (process.argv[1] === new URL(import.meta.url).pathname || process.argv[1].endsWith('index.js')) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Music Proxy Server running on port ${PORT}`);
+    console.log(`📡 Health check: http://localhost:${PORT}/health`);
+    console.log(`🎵 iTunes endpoint: http://localhost:${PORT}/api/itunes`);
+    console.log(`🎵 Deezer endpoint: http://localhost:${PORT}/api/deezer`);
+  });
+}
+
+export default app;
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

@@ -34,10 +34,10 @@ const SongsPage = () => {
             <div className="flex flex-col gap-6 mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                        Songs
+                        Musics
                     </h1>
                     <p className="text-gray-500 dark:text-gray-400">
-                        Browse top songs across genres
+                        Browse top musics across genres
                     </p>
                 </div>
 

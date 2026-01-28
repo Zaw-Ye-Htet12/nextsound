@@ -23,7 +23,7 @@ import "swiper/css";
 const Home = lazy(() => import("./pages/Home"));
 const Library = lazy(() => import("./pages/Library"));
 const ArtistsPage = lazy(() => import("./pages/Artists"));
-const SongsPage = lazy(() => import("./pages/Songs"));
+const MusicsPage = lazy(() => import("./pages/Musics"));
 const ArtistPage = lazy(() => import("./pages/Artist"));
 const LoginPage = lazy(() => import("./pages/Auth/LoginPage"));
 const RegisterPage = lazy(() => import("./pages/Auth/RegisterPage"));
@@ -85,7 +85,7 @@ const App = () => {
                   <Route path="/library" element={<Library />} />
                 </Route>
                 <Route path="/artists" element={<ArtistsPage />} />
-                <Route path="/songs" element={<SongsPage />} />
+                <Route path="/musics" element={<MusicsPage />} />
                 <Route path="/artist/:name" element={<ArtistPage />} />
                 <Route element={<PublicRoute />}>
                   <Route path="/login" element={<LoginPage />} />
