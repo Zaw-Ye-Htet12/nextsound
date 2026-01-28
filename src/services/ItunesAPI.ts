@@ -1,10 +1,9 @@
 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { ITrack } from "@/types";
-
 import { USE_BACKEND_PROXY, PROXY_SERVER_URL } from "@/utils/config";
 
-// iTunes API Configuration
+// iTunes API Configuration 
 // We use the proxy server to avoid CORS issues if possible, or fallback to direct
 const BASE_URL = USE_BACKEND_PROXY ? `${PROXY_SERVER_URL}/api` : 'https://itunes.apple.com';
 

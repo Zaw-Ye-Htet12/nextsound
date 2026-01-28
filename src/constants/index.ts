@@ -10,11 +10,12 @@ export const navLinks: INavLink[] = [
     path: "/",
     icon: AiOutlineHome,
   },
-  {
-    title: "library",
-    path: "/library",
-    icon: AiOutlineHome, // We'll update this to a proper icon later if needed, but AiOutlineHome works for now or let's use a heart or something better
-  },
+  //   {
+  //     title: "library",
+  //     path: "/library",
+  //     icon: AiOutlineHome, 
+  //   },
+
 ];
 
 export const themeOptions: ITheme[] = [

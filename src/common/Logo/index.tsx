@@ -11,7 +11,7 @@ interface logoProps {
 
 const Logo: React.FC<logoProps> = ({
   className = "",
-  logoColor = "text-black dark:text-primary",
+  logoColor = "text-[#F50057] dark:text-primary",
 }) => (
   <Link
     to="/"
@@ -23,7 +23,7 @@ const Logo: React.FC<logoProps> = ({
       className="sm:h-[28px] h-[24px] sm:w-[28px] w-[24px]"
     />
     <span
-      className={cn(logoColor,`font-semibold sm:text-[18px] text-[16.75px]`)}
+      className={cn(logoColor, `font-semibold sm:text-[18px] text-[16.75px]`)}
     >
       NextSound
     </span>

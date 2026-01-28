@@ -14,6 +14,8 @@ import { MiniPlayer } from "@/components/ui/MiniPlayer";
 import { QueueDrawer } from "@/components/ui/QueueDrawer";
 import { useAudioPlayerContext } from "@/context/audioPlayerContext";
 import { Toaster } from "sonner";
+import PublicRoute from "@/components/auth/PublicRoute";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 import "react-loading-skeleton/dist/skeleton.css";
 import "swiper/css";
@@ -23,6 +25,9 @@ const Library = lazy(() => import("./pages/Library"));
 const ArtistPage = lazy(() => import("./pages/Artist"));
 const LoginPage = lazy(() => import("./pages/Auth/LoginPage"));
 const RegisterPage = lazy(() => import("./pages/Auth/RegisterPage"));
+const ForgotPasswordPage = lazy(() => import("./pages/Auth/ForgotPasswordPage"));
+const UpdatePasswordPage = lazy(() => import("./pages/Auth/UpdatePasswordPage"));
+const VerifyEmailPage = lazy(() => import("./pages/Auth/VerifyEmailPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const App = () => {
@@ -66,7 +71,7 @@ const App = () => {
 
   return (
     <>
-      <SideBar />
+      <SideBar onOpenSearch={() => setIsCommandPaletteOpen(true)} />
       <Header onOpenSearch={() => setIsCommandPaletteOpen(true)} />
       <main className="transition-all duration-300 lg:pb-14 md:pb-4 sm:pb-2 xs:pb-1 pb-0 bg-white dark:bg-deep-dark min-h-screen">
         <ScrollToTop>
@@ -74,10 +79,17 @@ const App = () => {
             <Suspense fallback={<Loader />}>
               <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/library" element={<Library />} />
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/library" element={<Library />} />
+                </Route>
                 <Route path="/artist/:name" element={<ArtistPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
+                <Route element={<PublicRoute />}>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/verify-email" element={<VerifyEmailPage />} />
+                </Route>
+                <Route path="/update-password" element={<UpdatePasswordPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

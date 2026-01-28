@@ -13,6 +13,16 @@ import { Button } from "react-aria-components";
 import { ThemeMenu, Logo } from "..";
 import HeaderNavItem from "./HeaderNavItem";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { LogOut, Library } from "lucide-react";
+
 import { useGlobalContext } from "@/context/globalContext";
 import { useTheme } from "@/context/themeContext";
 import { maxWidth } from "@/styles";
@@ -31,36 +41,69 @@ const AuthButtons = ({ isNotFoundPage, isActive }: { isNotFoundPage: boolean; is
   const navigate = useNavigate();
 
   const buttonClass = cn(
-    "flex items-center justify-center px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105",
+    "flex items-center justify-center px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 border border-primary",
     isNotFoundPage || isActive
       ? "bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 text-black dark:text-white"
       : "border border-black backdrop-blur-sm hover:bg-white/20 text-black dark:text-white"
   );
 
+  const location = useLocation();
+
+  if (location.pathname === '/update-password') {
+    return null;
+  }
+
   if (user) {
     return (
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <Avatar.Root className="w-8 h-8 rounded-full overflow-hidden border border-white/20">
-            <Avatar.Image
-              src={user.user_metadata?.avatar_url}
-              alt={user.user_metadata?.full_name}
-              className="w-full h-full object-cover"
-            />
-            <Avatar.Fallback className="w-full h-full flex items-center justify-center bg-purple-600 text-white text-xs">
-              {user.email?.[0].toUpperCase()}
-            </Avatar.Fallback>
-          </Avatar.Root>
-          <button
-            onClick={signOut}
-            className={cn(
-              "text-sm font-medium hover:underline",
-              isNotFoundPage || isActive ? "text-gray-600 dark:text-gray-300" : "text-gray-300"
-            )}
-          >
-            Sign Out
-          </button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Avatar.Root
+              className="h-8 w-8 rounded-full overflow-hidden border border-white/20 hover:opacity-80 transition-opacity cursor-pointer outline-none"
+            >
+              <Avatar.Image
+                src={user.user_metadata?.avatar_url}
+                alt={user.user_metadata?.full_name}
+                className="h-full w-full object-cover"
+              />
+              <Avatar.Fallback className="h-full w-full flex items-center justify-center bg-purple-600 text-white text-xs">
+                {user.email?.[0]?.toUpperCase()}
+              </Avatar.Fallback>
+            </Avatar.Root>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">
+                  {user.user_metadata?.full_name}
+                </p>
+                <p className="text-xs leading-none text-muted-foreground opacity-70">
+                  {user.email}
+                </p>
+              </div>
+            </DropdownMenuLabel>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem
+              onClick={() => navigate('/library')}
+              className="cursor-pointer"
+            >
+              <Library className="mr-2 h-4 w-4" />
+              <span>Library</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={signOut}
+              className="text-red-500 focus:text-red-600 cursor-pointer"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
       </div>
     );
   }
@@ -192,7 +235,7 @@ const Header = ({ onOpenSearch }: HeaderProps) => {
             `inline-block text-[22.75px] md:hidden  transition-all duration-300`,
             isNotFoundPage || isActive
               ? `text-black dark:text-white dark:hover:text-gray-300 hover:text-gray-600 `
-              : ` dark:hover:text-sec-color text-sec-color`
+              : `text-white dark:hover:text-sec-color`
           )}
           onClick={() => setShowSidebar(true)}
         >

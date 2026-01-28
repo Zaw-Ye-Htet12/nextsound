@@ -113,9 +113,17 @@ const LoginPage = () => {
                             control={form.control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor="password-input" className="dark:text-white">
-                                        Password
-                                    </FieldLabel>
+                                    <div className="flex items-center justify-between">
+                                        <FieldLabel htmlFor="password-input" className="dark:text-white">
+                                            Password
+                                        </FieldLabel>
+                                        <Link
+                                            to="/forgot-password"
+                                            className="text-xs text-brand hover:text-red-500 font-medium transition-colors"
+                                        >
+                                            Forgot password?
+                                        </Link>
+                                    </div>
                                     <div className="relative">
                                         <Input
                                             {...field}

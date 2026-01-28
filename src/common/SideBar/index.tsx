@@ -1,24 +1,42 @@
 import React, { useCallback } from "react";
 import { AnimatePresence, m } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { LogOut, Library, ChevronsUpDown, Home } from "lucide-react";
+import { FiSearch } from "react-icons/fi";
+import { BsPersonCircle } from "react-icons/bs";
 
 import SidebarNavItem from "./SidebarNavItem";
 import ThemeOption from "./SidebarThemeOption";
 import Logo from "../Logo";
 import Overlay from "../Overlay";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
 
 import { useGlobalContext } from "@/context/globalContext";
 import { useTheme } from "@/context/themeContext";
+import { useAuth } from "@/context/AuthContext";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { useMotion } from "@/hooks/useMotion";
 import { navLinks, themeOptions } from "@/constants";
-import { sideBarHeading } from "@/styles";
+import { sideBarHeading, listItem } from "@/styles";
 import { INavLink } from "@/types";
 import { cn } from "@/utils/helper";
 
-const SideBar: React.FC = () => {
+interface SideBarProps {
+  onOpenSearch?: () => void;
+}
+
+const SideBar: React.FC<SideBarProps> = ({ onOpenSearch }) => {
   const { showSidebar, setShowSidebar } = useGlobalContext();
   const { theme } = useTheme();
   const { slideIn } = useMotion();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [isOpen, setIsOpen] = React.useState(false);
 
   const closeSideBar = useCallback(() => {
     setShowSidebar(false);
@@ -26,8 +44,23 @@ const SideBar: React.FC = () => {
 
   const { ref } = useOnClickOutside({
     action: closeSideBar,
-    enable: showSidebar
+    enable: showSidebar,
   });
+
+  const handleSignOut = () => {
+    signOut();
+    closeSideBar();
+  };
+
+  const handleSignIn = () => {
+    navigate("/login");
+    closeSideBar();
+  };
+
+  const handleSearch = () => {
+    onOpenSearch?.();
+    closeSideBar();
+  };
 
   return (
     <AnimatePresence>
@@ -40,15 +73,12 @@ const SideBar: React.FC = () => {
             exit="hidden"
             ref={ref}
             className={cn(
-              `fixed top-0 right-0 sm:w-[40%] xs:w-[220px] w-[195px] h-full z-25 overflow-y-auto shadow-md md:hidden p-4 pb-0 dark:text-gray-200 text-gray-600`,
+              `fixed top-0 right-0 sm:w-[40%] xs:w-[220px] w-[195px] h-full z-25 overflow-y-auto shadow-md md:hidden p-4 pb-0 dark:text-gray-200 text-gray-600 flex flex-col`,
               theme === "Dark" ? "dark-glass" : "light-glass"
             )}
           >
-            <div className="flex items-center justify-center  ">
-              <Logo />
-            </div>
 
-            <div className="p-4 sm:pt-8  xs:pt-6 pt-[22px] h-full flex flex-col">
+            <div className="pt-[40px] flex-1 flex flex-col overflow-y-auto no-scrollbar">
               <h3 className={sideBarHeading}>Menu</h3>
               <ul className="flex flex-col sm:gap-2 xs:gap-[6px] gap-1 capitalize xs:text-[14px] text-[13.5px] font-medium">
                 {navLinks.map((link: INavLink) => {
@@ -60,6 +90,33 @@ const SideBar: React.FC = () => {
                     />
                   );
                 })}
+
+                {/* Search Item */}
+                <li>
+                  <button
+                    onClick={handleSearch}
+                    className={listItem}
+                  >
+                    <FiSearch className="text-[18px]" />
+                    <span>Search</span>
+                  </button>
+                </li>
+
+                {/* Library Item - Only show if logged in */}
+                {user && (
+                  <li>
+                    <button
+                      onClick={() => {
+                        navigate("/library");
+                        closeSideBar();
+                      }}
+                      className={listItem}
+                    >
+                      <Library className="h-[18px] w-[18px]" />
+                      <span>Library</span>
+                    </button>
+                  </li>
+                )}
               </ul>
 
               <h3 className={cn(`mt-4 `, sideBarHeading)}>Theme</h3>
@@ -69,9 +126,57 @@ const SideBar: React.FC = () => {
                 })}
               </ul>
 
-              <p className="xs:text-[12px] text-[11.75px] mt-auto sm:mb-6 mb-[20px] text-center font-nunito dark:text-gray-200">
-                &copy; 2023 by tMovies. All right reserved.
-              </p>
+              {/* Account Section at Bottom */}
+              <div className="mt-auto pt-4 pb-2">
+                {!user ? (
+                  <button
+                    onClick={handleSignIn}
+                    className={cn(listItem, "w-full justify-start")}
+                  >
+                    <BsPersonCircle className="text-[18px]" />
+                    <span>Sign In</span>
+                  </button>
+                ) : (
+                  <Collapsible
+                    open={isOpen}
+                    onOpenChange={setIsOpen}
+                    className="w-full space-y-2"
+                  >
+                    <div className="flex items-center justify-between px-2 py-2 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        {user.user_metadata?.avatar_url ? (
+                          <img
+                            src={user.user_metadata.avatar_url}
+                            alt="Avatar"
+                            className="w-6 h-6 rounded-full object-cover shrink-0"
+                          />
+                        ) : (
+                          <BsPersonCircle className="text-[18px] shrink-0" />
+                        )}
+                        <span className="truncate text-sm font-medium">{user.user_metadata?.full_name}</span>
+                      </div>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="w-8 h-8 p-0 hover:bg-transparent">
+                          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                          <span className="sr-only">Toggle</span>
+                        </Button>
+                      </CollapsibleTrigger>
+                    </div>
+                    <CollapsibleContent className="space-y-1 px-2">
+                      <div className="rounded-md border border-black/10 dark:border-white/10 px-3 py-2 text-xs font-mono text-muted-foreground break-all bg-black/5 dark:bg-black/20">
+                        {user.email}
+                      </div>
+                      <button
+                        onClick={handleSignOut}
+                        className={cn(listItem, "w-full justify-start pl-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10")}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Log Out</span>
+                      </button>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+              </div>
             </div>
           </m.nav>
         </Overlay>
