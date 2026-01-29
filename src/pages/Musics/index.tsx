@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useGetTracksQuery } from "@/services/MusicAPI";
-import { TrackCard } from "@/components/ui/TrackCard";
 import { SkelatonLoader } from "@/common";
 import { cn } from "@/utils/helper";
-import { useAudioPlayerContext } from "@/context/audioPlayerContext";
 import MusicGrid from "@/common/Section/MusicGrid";
 
 const filters = [
