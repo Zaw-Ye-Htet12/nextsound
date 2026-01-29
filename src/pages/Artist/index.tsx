@@ -43,74 +43,78 @@ const ArtistPage = () => {
     }
 
     return (
-        <div className="flex flex-col w-full min-h-screen">
+        <div className="flex flex-col w-full min-h-screen bg-white dark:bg-black">
             {/* Hero Section */}
-            <div className="relative w-full h-[50vh] min-h-[300px]">
-                {/* Background Image with Blur */}
-                <div className="absolute inset-0 overflow-hidden">
+            <div className="relative w-full h-[55vh] md:h-[50vh] min-h-[400px]">
+                {/* Background Image - Expanded for mobile immersion */}
+                <div className="absolute inset-0 z-0">
                     <img
                         src={getImageUrl(heroTrack.poster_path)}
                         alt={name}
-                        className="w-full h-full object-cover blur-3xl opacity-50 dark:opacity-30 scale-110"
+                        className="w-full h-full object-cover transition-transform duration-700"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-white via-white/50 to-transparent dark:from-deep-dark dark:via-deep-dark/50 dark:to-transparent" />
-                    {/* Top Gradient for Navbar Visibility */}
-                    <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/80 to-transparent z-10" />
+                    {/* Gradient overlays for text readability and aesthetic fade */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-white dark:to-black opacity-90" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-white via-white/40 to-transparent dark:from-black dark:via-black/50 dark:to-transparent" />
                 </div>
 
-                <div className="absolute inset-0 flex flex-col justify-end px-4 md:px-8 pb-8 z-10 max-w-7xl mx-auto w-full">
-                    {/* Back Button */}
-                    <div className="absolute top-20 left-4 md:left-8">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => navigate(-1)}
-                            className="rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-md text-gray-900 dark:text-white"
-                        >
-                            <FiChevronLeft className="w-6 h-6" />
-                        </Button>
-                    </div>
+                {/* Navigation Header - Fixed/Absolute top */}
+                <div className="absolute top-0 left-0 right-0 p-4 z-50 flex items-center justify-between pt-safe-top md:pt-6">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate(-1)}
+                        className="rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/10 shadow-sm"
+                    >
+                        <FiChevronLeft className="w-6 h-6" />
+                    </Button>
+                </div>
 
-                    <div className="flex flex-col md:flex-row items-end md:items-end gap-6">
-                        {/* Artist Image (Circle) */}
-                        <div className="w-40 h-40 md:w-52 md:h-52 rounded-full overflow-hidden shadow-2xl border-4 border-white dark:border-gray-800 flex-shrink-0">
-                            <img
-                                src={getImageUrl(heroTrack.poster_path)}
-                                alt={name}
-                                className="w-full h-full object-cover"
-                            />
+                {/* Artist Content - Bottom aligned */}
+                <div className="absolute inset-0 flex flex-col justify-end pb-10 px-6 z-20 max-w-7xl mx-auto w-full">
+                    <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 w-full text-center md:text-left">
+                        {/* Artist Avatar - Mobile: Centered & Large, Desktop: Left */}
+                        <div className="relative group shrink-0">
+                            <div className="w-40 h-40 md:w-64 md:h-64 rounded-full overflow-hidden shadow-2xl ring-4 ring-white dark:ring-gray-800 mx-auto transform transition-transform duration-500 hover:scale-105">
+                                <img
+                                    src={getImageUrl(heroTrack.poster_path)}
+                                    alt={name}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
                         </div>
 
-                        {/* Info */}
-                        <div className="flex flex-col gap-2 mb-2 flex-1">
-                            <span className="text-brand font-bold uppercase tracking-wider text-sm flex items-center gap-2">
-                                <span className="w-6 h-0.5 bg-brand"></span>
-                                Artist
-                            </span>
-                            <h1 className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tight">
+                        {/* Text Info */}
+                        <div className="flex flex-col gap-3 flex-1 items-center md:items-start mb-2">
+                            <h1 className="text-4xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter drop-shadow-sm leading-tight">
                                 {heroTrack.artist}
                             </h1>
-                            <p className="text-gray-600 dark:text-gray-300 font-medium">
-                                {tracks.length} Top Tracks
-                            </p>
+                            <div className="flex items-center gap-3 text-sm md:text-base font-medium text-gray-600 dark:text-gray-300">
+                                <span className="px-3 py-1 bg-brand/10 text-brand rounded-full uppercase tracking-wider text-xs font-bold">Artist</span>
+                                <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                                <span>{tracks.length} Releases</span>
+                            </div>
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex gap-4 mb-4">
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-4 mt-2 md:mb-2 w-full md:w-auto justify-center md:justify-start">
                             <Button
-                                className="h-14 px-8 rounded-full bg-brand hover:brightness-90 text-white text-lg font-bold shadow-xl hover:scale-105 transition-transform"
+                                className="h-14 px-10 rounded-full bg-brand hover:bg-brand/90 text-white text-lg font-bold shadow-lg shadow-brand/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
                                 onClick={() => playTrack(tracks[0])}
                             >
-                                <FiPlay className="w-5 h-5 mr-2 fill-current" />
-                                Play Top Songs
+                                <FiPlay className="w-6 h-6 mr-2 fill-current" />
+                                Play All
                             </Button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Content */}
-            <div className="px-4 md:px-8 py-8 max-w-7xl mx-auto w-full pb-24">
+            {/* Content Section */}
+            <div className="relative z-20 px-4 md:px-8 py-6 max-w-7xl mx-auto w-full pb-32">
+                <div className="flex items-center justify-between mb-6 sticky top-0 bg-white/95 dark:bg-black/95 backdrop-blur-sm py-4 z-40">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Top Tracks</h2>
+                </div>
                 <MusicGrid
                     tracks={tracks}
                     category="artist"

@@ -337,3 +337,35 @@ body {
 .dark img:hover {
   filter: brightness(0.9) contrast(1.05) saturate(0.95);
 }
+
+/* Full Screen Player Animations */
+@keyframes pulse-slow {
+
+  0%,
+  100% {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 25px 60px -12px rgba(255, 0, 0, 0.3), 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+/* Safe area padding for mobile devices with notch */
+.pt-safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.pb-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Prevent text selection in player */
+.user-select-none {
+  -webkit-user-select: none;
+  user-select: none;
+}

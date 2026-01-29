@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { useGlobalContext } from "@/context/globalContext";
 import { useTheme } from "@/context/themeContext";
 import { useAuth } from "@/context/AuthContext";
+import { useAudioPlayerContext } from "@/context/audioPlayerContext";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { useMotion } from "@/hooks/useMotion";
 import { navLinks, themeOptions } from "@/constants";
@@ -35,8 +36,12 @@ const SideBar: React.FC<SideBarProps> = ({ onOpenSearch }) => {
   const { theme } = useTheme();
   const { slideIn } = useMotion();
   const { user, signOut } = useAuth();
+  const { currentTrack } = useAudioPlayerContext();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = React.useState(false);
+
+  // Check if MiniPlayer is visible (when there's a current track)
+  const isMiniPlayerVisible = !!currentTrack;
 
   const closeSideBar = useCallback(() => {
     setShowSidebar(false);
@@ -73,9 +78,12 @@ const SideBar: React.FC<SideBarProps> = ({ onOpenSearch }) => {
             exit="hidden"
             ref={ref}
             className={cn(
-              `fixed top-0 right-0 sm:w-[40%] xs:w-[220px] w-[195px] h-full z-25 overflow-y-auto shadow-md md:hidden p-4 pb-0 dark:text-gray-200 text-gray-600 flex flex-col`,
+              `fixed top-0 right-0 sm:w-[40%] xs:w-[220px] w-[195px] overflow-y-auto shadow-md md:hidden p-4 pb-0 dark:text-gray-200 text-gray-600 flex flex-col z-[7000]`,
               theme === "Dark" ? "dark-glass" : "light-glass"
             )}
+            style={{
+              height: isMiniPlayerVisible ? 'calc(100vh - 76px)' : '100vh',
+            }}
           >
 
             <div className="pt-[40px] flex-1 flex flex-col overflow-y-auto no-scrollbar">
