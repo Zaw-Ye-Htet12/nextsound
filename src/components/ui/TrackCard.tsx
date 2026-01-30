@@ -107,9 +107,9 @@ export const TrackCard: React.FC<TrackCardProps> = ({
               <div className="flex gap-2">
                 {/* Favorite Button */}
                 <button
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
-                    toggleFavorite(track);
+                    await toggleFavorite(track);
                   }}
                   className={cn(
                     "transition-colors transform hover:scale-110 p-2 bg-black/40 rounded-full hover:bg-black/60",

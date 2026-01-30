@@ -32,7 +32,7 @@ const Overlay: FC<OverlayProps> = ({ className, children }) => {
       animate="show"
       exit="hidden"
       className={cn(
-        `fixed top-0 left-0 z-20 bg-black-overlay w-screen h-screen `,
+        `fixed top-0 left-0 z-[9000] bg-black-overlay w-screen h-screen `,
         className
       )}
     >

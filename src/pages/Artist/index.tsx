@@ -11,7 +11,7 @@ import MusicGrid from '@/common/Section/MusicGrid';
 const ArtistPage = () => {
     const { name } = useParams<{ name: string }>();
     const navigate = useNavigate();
-    const { playTrack } = useAudioPlayerContext();
+    const { playAllTracks } = useAudioPlayerContext();
 
     // Search for tracks by this artist to populate the page
     // We add "artist" to query to be more specific? Or just name.
@@ -45,7 +45,7 @@ const ArtistPage = () => {
     return (
         <div className="flex flex-col w-full min-h-screen bg-white dark:bg-black">
             {/* Hero Section */}
-            <div className="relative w-full h-[55vh] md:h-[50vh] min-h-[400px]">
+            <div className="relative pt-100 w-full h-[55vh] md:h-[50vh] min-h-[500px]">
                 {/* Background Image - Expanded for mobile immersion */}
                 <div className="absolute inset-0 z-0">
                     <img
@@ -59,7 +59,7 @@ const ArtistPage = () => {
                 </div>
 
                 {/* Navigation Header - Fixed/Absolute top */}
-                <div className="absolute top-0 left-0 right-0 p-4 z-50 flex items-center justify-between pt-safe-top md:pt-6">
+                <div className="absolute top-10 z-30 left-0 right-0 p-4 flex items-center justify-between  md:pt-6">
                     <Button
                         variant="ghost"
                         size="icon"
@@ -100,7 +100,7 @@ const ArtistPage = () => {
                         <div className="flex items-center gap-4 mt-2 md:mb-2 w-full md:w-auto justify-center md:justify-start">
                             <Button
                                 className="h-14 px-10 rounded-full bg-brand hover:bg-brand/90 text-white text-lg font-bold shadow-lg shadow-brand/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
-                                onClick={() => playTrack(tracks[0])}
+                                onClick={() => playAllTracks(tracks)}
                             >
                                 <FiPlay className="w-6 h-6 mr-2 fill-current" />
                                 Play All

@@ -2,6 +2,8 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { ITrack } from '@/types';
 import { mcpAudioService, PreviewTrack as _PreviewTrack } from '@/services/MCPAudioService';
+import { favoritesService } from '@/services/favoritesService';
+import { supabase } from '@/services/supabase';
 
 interface AudioPlayerState {
   currentTrack: ITrack | null;
@@ -14,6 +16,7 @@ interface AudioPlayerState {
   queue: ITrack[];
   isQueueOpen: boolean;
   favorites: ITrack[];
+  favoritesLoading: boolean;
 }
 
 export const useAudioPlayer = () => {
@@ -27,7 +30,8 @@ export const useAudioPlayer = () => {
     isMinimized: false,
     queue: [],
     isQueueOpen: false,
-    favorites: JSON.parse(localStorage.getItem('nextsound_favorites') || '[]'),
+    favorites: [],
+    favoritesLoading: true,
   });
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -108,6 +112,35 @@ export const useAudioPlayer = () => {
         clearInterval(simulationInterval.current);
       }
     };
+  }, []);
+
+  // Load favorites from database on mount
+  useEffect(() => {
+    const loadFavorites = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setState(prev => ({ ...prev, favoritesLoading: false }));
+        return;
+      }
+
+      try {
+        // Try to migrate localStorage data first
+        const migrated = await favoritesService.migrateLocalStorageFavorites();
+        if (migrated > 0) {
+          toast.success(`Migrated ${migrated} favorite${migrated > 1 ? 's' : ''} to your account`);
+        }
+
+        // Load favorites from database
+        const favorites = await favoritesService.getFavorites();
+        setState(prev => ({ ...prev, favorites, favoritesLoading: false }));
+      } catch (error) {
+        console.error('Failed to load favorites:', error);
+        toast.error('Failed to load your favorites');
+        setState(prev => ({ ...prev, favoritesLoading: false }));
+      }
+    };
+
+    loadFavorites();
   }, []);
 
   // Update progress
@@ -365,25 +398,36 @@ export const useAudioPlayer = () => {
     });
   }, []);
 
-  const toggleFavorite = useCallback((track: ITrack) => {
-    setState(prev => {
-      const isFavorite = prev.favorites.some(t => t.id === track.id);
-      let newFavorites;
+  const toggleFavorite = useCallback(async (track: ITrack) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('Please sign in to save favorites');
+      return;
+    }
 
+    const isFavorite = state.favorites.some(t => t.id === track.id);
+
+    try {
       if (isFavorite) {
-        newFavorites = prev.favorites.filter(t => t.id !== track.id);
+        await favoritesService.removeFavorite(track.id);
+        setState(prev => ({
+          ...prev,
+          favorites: prev.favorites.filter(t => t.id !== track.id)
+        }));
         toast.info(`Removed "${track.title || track.name}" from library`);
       } else {
-        newFavorites = [...prev.favorites, track];
+        await favoritesService.addFavorite(track);
+        setState(prev => ({
+          ...prev,
+          favorites: [...prev.favorites, track]
+        }));
         toast.success(`Added "${track.title || track.name}" to library`);
       }
-
-      // Persist to localStorage
-      localStorage.setItem('nextsound_favorites', JSON.stringify(newFavorites));
-
-      return { ...prev, favorites: newFavorites };
-    });
-  }, []);
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error);
+      toast.error('Failed to update favorites');
+    }
+  }, [state.favorites]);
 
   const toggleMinimize = useCallback(() => {
     setState(prev => ({ ...prev, isMinimized: !prev.isMinimized }));
@@ -406,8 +450,9 @@ export const useAudioPlayer = () => {
       queue: [],
       isQueueOpen: false,
       favorites: state.favorites,
+      favoritesLoading: state.favoritesLoading,
     });
-  }, [state.favorites]);
+  }, [state.favorites, state.favoritesLoading]);
 
   const addToQueue = useCallback((track: ITrack) => {
     setState(prev => {
@@ -442,6 +487,23 @@ export const useAudioPlayer = () => {
     setState(prev => ({ ...prev, isQueueOpen: !prev.isQueueOpen }));
   }, []);
 
+  const playAllTracks = useCallback((tracks: ITrack[]) => {
+    if (tracks.length === 0) return;
+
+    // First track plays immediately, rest go to queue
+    const [firstTrack, ...restTracks] = tracks;
+
+    setState(prev => ({
+      ...prev,
+      currentTrack: firstTrack,
+      isPlaying: true,
+      progress: 0,
+      queue: restTracks,
+    }));
+
+    toast.success(`Playing ${tracks.length} track${tracks.length > 1 ? 's' : ''}`);
+  }, []);
+
   return {
     // State
     currentTrack: state.currentTrack,
@@ -470,6 +532,8 @@ export const useAudioPlayer = () => {
     removeFromQueue,
     reorderQueue,
     toggleQueue,
+    playAllTracks,
     favorites: state.favorites,
+    favoritesLoading: state.favoritesLoading,
   };
 };

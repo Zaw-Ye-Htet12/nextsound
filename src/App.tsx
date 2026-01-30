@@ -132,7 +132,7 @@ const App = () => {
           onVolumeChange={setVolume}
           onToggleShuffle={toggleShuffle}
           onToggleRepeat={toggleRepeat}
-          onToggleFavorite={() => toggleFavorite(currentTrack)}
+          onToggleFavorite={async () => await toggleFavorite(currentTrack)}
           onToggleMinimize={toggleMinimize}
           onClose={closePlayer}
           onToggleQueue={toggleQueue}

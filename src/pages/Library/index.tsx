@@ -7,7 +7,7 @@ import { useAudioPlayerContext } from "@/context/audioPlayerContext";
 import { getImageUrl } from "@/utils";
 
 const Library: FC = () => {
-    const { favorites } = useAudioPlayerContext();
+    const { favorites, favoritesLoading } = useAudioPlayerContext();
     const [activeTab, setActiveTab] = useState<'songs' | 'artists'>('songs');
 
     return (
@@ -52,7 +52,12 @@ const Library: FC = () => {
             {/* Content Section */}
             <div className="px-4 pb-24">
                 {activeTab === 'songs' ? (
-                    favorites.length > 0 ? (
+                    favoritesLoading ? (
+                        <div className="flex flex-col items-center justify-center py-20">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mb-4"></div>
+                            <p className="text-gray-500 dark:text-gray-400">Loading your favorites...</p>
+                        </div>
+                    ) : favorites.length > 0 ? (
                         <MusicGrid
                             tracks={favorites}
                             category="library"

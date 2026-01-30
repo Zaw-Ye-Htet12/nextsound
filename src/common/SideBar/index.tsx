@@ -87,6 +87,28 @@ const SideBar: React.FC<SideBarProps> = ({ onOpenSearch }) => {
           >
 
             <div className="pt-[40px] flex-1 flex flex-col overflow-y-auto no-scrollbar">
+              {/* Close Button */}
+              <button
+                onClick={closeSideBar}
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+                aria-label="Close sidebar"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+
               <h3 className={sideBarHeading}>Menu</h3>
               <ul className="flex flex-col sm:gap-2 xs:gap-[6px] gap-1 capitalize xs:text-[14px] text-[13.5px] font-medium">
                 {navLinks.map((link: INavLink) => {
