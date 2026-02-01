@@ -11,6 +11,7 @@ import ErrorBoundary, { APIErrorBoundary } from "./ErrorBoundary";
 import ThemeMenu from "./ThemeMenu";
 import Section from "./Section";
 import DemoModeBadge from "./DemoModeBadge";
+import Marquee from "./Marquee";
 
 export {
   Footer,
@@ -31,4 +32,5 @@ export {
   ThemeMenu,
   Section,
   DemoModeBadge,
+  Marquee,
 };

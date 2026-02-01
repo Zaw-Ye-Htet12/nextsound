@@ -58,20 +58,24 @@ export const itunesApi = createApi({
     reducerPath: "itunesApi",
     baseQuery: fetchBaseQuery({ baseUrl: BASE_URL }),
     endpoints: (builder) => ({
-        searchMusic: builder.query<{ results: ITrack[] }, { query: string, limit?: number, entity?: string }>({
-            query: ({ query, limit = 25, entity = 'song' }) => ({
-                url: USE_BACKEND_PROXY ? '/itunes' : '/search', // If using proxy, path is /itunes
-                params: {
+        searchMusic: builder.query<{ results: ITrack[] }, { query: string, limit?: number, entity?: string, attribute?: string }>({
+            query: ({ query, limit = 25, entity = 'song', attribute }) => {
+                const params: any = {
                     term: query,
                     limit: limit,
                     entity: entity,
                     media: 'music'
+                };
+                if (attribute) {
+                    params.attribute = attribute;
                 }
-            }),
+                return {
+                    url: USE_BACKEND_PROXY ? '/itunes' : '/search',
+                    params: params
+                };
+            },
             transformResponse: (response: ItunesResponse) => {
                 // Determine if we are handling tracks or artists based on result structure
-                // But ItunesResponse interface assumes proper track struct. 
-                // We'll map optimistically.
                 const results = response.results.map(item => {
                     // Check if wrapperType is 'artist'
                     if ((item as any).wrapperType === 'artist') {
@@ -80,10 +84,6 @@ export const itunesApi = createApi({
                             id: String((item as any).artistId),
                             spotify_id: String((item as any).artistId),
                             poster_path: '', // Artists often don't have images in search results!
-                            // Wait, check_artist_api.cjs output showed NO artist image in search result.
-                            // "artistLinkUrl": "...", "primaryGenreName": "Pop"
-                            // We need a fallback or another way to get image. 
-                            // But for now, let's map what we have.
                             backdrop_path: '',
                             original_title: (item as any).artistName,
                             name: (item as any).artistName,
@@ -101,14 +101,10 @@ export const itunesApi = createApi({
                             year: 0
                         } as ITrack;
                     }
+
                     return transformItunesTrack(item);
                 });
 
-                // Shuffle
-                for (let i = results.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [results[i], results[j]] = [results[j], results[i]];
-                }
                 return { results };
             }
         })

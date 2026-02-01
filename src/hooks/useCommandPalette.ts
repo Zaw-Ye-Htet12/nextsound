@@ -1,9 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { itunesApi } from '@/services/ItunesAPI';
+import { deezerApi } from '@/services/DeezerAPI';
 import { ITrack } from '@/types';
 import { useTheme } from '@/context/themeContext';
 import { useGlobalContext } from '@/context/globalContext';
+import { toast } from 'sonner';
 
 export interface SearchResult {
   id: string;
@@ -14,6 +16,7 @@ export interface SearchResult {
   data: any;
   action?: () => void;
   isExactMatch?: boolean;
+  keepOpen?: boolean;
 }
 
 export interface Command {
@@ -46,6 +49,8 @@ export const useCommandPalette = ({
   const [searchHistory, setSearchHistory] = useState<SearchResult[]>([]);
 
 
+
+
   // Load recent searches from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem('nextsound_search_history');
@@ -60,6 +65,8 @@ export const useCommandPalette = ({
     }
   }, []);
 
+
+
   // Search for music when query changes using iTunes API
   const {
     data: musicSearchData,
@@ -69,22 +76,22 @@ export const useCommandPalette = ({
     {
       query: query.trim(),
       limit: 5,
-      entity: 'song'
+      entity: 'song',
+      attribute: 'songTerm'
     },
     {
       skip: !query.trim()
     }
   );
 
-  // Search for Artists
+  // Search for Artists using Deezer (better images)
   const {
     data: artistSearchData,
     isLoading: isArtistSearchLoading
-  } = itunesApi.useSearchMusicQuery(
+  } = deezerApi.useSearchArtistsQuery(
     {
       query: query.trim(),
-      limit: 3,
-      entity: 'musicArtist'
+      limit: 3
     },
     {
       skip: !query.trim()
@@ -177,26 +184,27 @@ export const useCommandPalette = ({
 
     // Process Artist Results first
     if (artistSearchData?.results) {
-      results.push(...artistSearchData.results.map((artist: ITrack) => {
-        // Check if it's an exact match
-        const isExact = artist.name.toLowerCase() === query.trim().toLowerCase();
-        return {
-          id: artist.id,
-          type: 'artist' as const,
-          title: artist.name,
-          subtitle: 'Artist',
-          image: artist.poster_path,
-          data: artist,
-          isExactMatch: isExact,
-          action: () => navigate(`/artist/${encodeURIComponent(artist.name)}`)
-        };
-      }));
+      results.push(...artistSearchData.results
+        .map((artist: ITrack) => {
+          // Check if it's an exact match
+          const isExact = artist.name.toLowerCase() === query.trim().toLowerCase();
+          return {
+            id: `artist-${artist.id}`,
+            type: 'artist' as const,
+            title: artist.name,
+            subtitle: 'Artist',
+            image: artist.poster_path,
+            data: artist,
+            isExactMatch: isExact,
+            action: () => navigate(`/artist/${encodeURIComponent(artist.name)}`)
+          };
+        }));
     }
 
     if (musicSearchData?.results) {
       // Use iTunes API results
       results.push(...musicSearchData.results.map((track: ITrack) => ({
-        id: track.id,
+        id: `track-${track.id}`,
         type: 'track' as const,
         title: track.title || track.name || 'Unknown Track',
         subtitle: `${track.artist || 'Unknown Artist'} • ${track.album || 'Unknown Album'}`,
@@ -209,24 +217,82 @@ export const useCommandPalette = ({
     return results;
   }, [musicSearchData, artistSearchData, query, navigate]);
 
+
+
   // Separate exact matches from recommendations
   const { exactMatches, recommendations } = useMemo(() => {
-    if (!query.trim()) return { exactMatches: [], recommendations: [] };
+    // Combine all results - showing Artists and Songs
+    const allCombined = [...musicResults];
 
-    const allCombined = [...musicResults, ...filteredCommands];
-    const exact = allCombined.filter(item => item.isExactMatch);
-    const recs = allCombined.filter(item => !item.isExactMatch);
+    // Filter "bullshit" results: Ensure the item title or artist matches at least one word from the query
+    // This prevents iTunes from returning "Crazy" when you search "Slow down like crazy" just because of one word.
+    const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+
+    // Only apply strict filtering if we have enough words (avoid filtering short queries like "Ad")
+    const filteredResults = allCombined.filter(item => {
+      // If query is short, trust the API
+      if (query.length < 3) return true;
+
+      const title = item.title.toLowerCase();
+      const artist = (item.data?.artist || '').toLowerCase();
+      const fullQuery = query.toLowerCase();
+
+      // Check if full query appears in title or artist (best match)
+      if (title.includes(fullQuery) || artist.includes(fullQuery)) return true;
+
+      // Check if at least one significant word appears in title or artist
+      if (queryWords.length > 0) {
+        return queryWords.some(word => title.includes(word) || artist.includes(word));
+      }
+
+      return true;
+    });
+
+    // Deduplicate by ID
+    const uniqueResults = filteredResults.filter((item, index, self) =>
+      index === self.findIndex((t) => (
+        t.id === item.id
+      ))
+    );
+
+    // Sort: Artists -> Tracks
+    uniqueResults.sort((a, b) => {
+      const typeScore = (type: string) => {
+        if (type === 'artist') return 1;
+        if (type === 'track') return 2;
+        return 3;
+      };
+      return typeScore(a.type) - typeScore(b.type);
+    });
+
+    const exact = uniqueResults.filter(item => item.isExactMatch);
+    const recs = uniqueResults.filter(item => !item.isExactMatch);
 
     return { exactMatches: exact, recommendations: recs };
-  }, [query, musicResults, filteredCommands]);
+  }, [musicResults, query]);
 
   // Combine all results (maintaining separation for UI)
   const allResults = useMemo(() => {
     if (!query.trim()) return [];
 
     // Show exact matches first, then recommendations
-    return [...exactMatches, ...recommendations];
-  }, [query, exactMatches, recommendations]);
+    const results = [...exactMatches, ...recommendations];
+
+    // Add "View all results" option at the end if there are results
+    if (results.length > 0) {
+      results.push({
+        id: 'view-all-results',
+        type: 'command',
+        title: `See all results for "${query}"`,
+        subtitle: 'View comprehensive search results',
+        data: { category: 'search' },
+        action: () => navigate(`/search/${encodeURIComponent(query)}`),
+        keepOpen: false
+      });
+    }
+
+    return results;
+  }, [query, exactMatches, recommendations, navigate]);
 
   // Handle item selection
   const handleItemSelect = (item: SearchResult) => {
@@ -255,9 +321,11 @@ export const useCommandPalette = ({
     onItemSelect?.(item);
 
     // Close palette and reset
-    onClose?.();
-    setQuery('');
-    setSelectedIndex(0);
+    if (!item.keepOpen) {
+      onClose?.();
+      setQuery('');
+      setSelectedIndex(0);
+    }
   };
 
   // Get recent items for empty state
@@ -286,6 +354,8 @@ export const useCommandPalette = ({
     error: searchError,
     handleItemSelect,
     clearHistory: () => {
+      setRecentSearches([]);
+      setSearchHistory([]);
       setRecentSearches([]);
       setSearchHistory([]);
       localStorage.removeItem('nextsound_search_history');

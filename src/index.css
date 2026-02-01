@@ -369,3 +369,24 @@ body {
   -webkit-user-select: none;
   user-select: none;
 }
+
+/* Marquee Animation */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  white-space: nowrap;
+  animation: marquee var(--marquee-duration, 15s) linear infinite;
+}
+
+/* Pause animation on hover */
+.group:hover .group-hover\:pause {
+  animation-play-state: paused;
+}

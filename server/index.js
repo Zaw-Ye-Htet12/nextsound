@@ -33,10 +33,10 @@ app.get('/api/itunes', async (req, res) => {
 
     const response = await axios.get(itunesUrl, {
       params: {
-        ...req.query,
         country: 'US', // Default to US store
-        media: 'music',
-        entity: 'song'
+        media: 'music', // Default, but can be overridden
+        entity: 'song', // Default, but can be overridden
+        ...req.query
       },
       headers: {
         'Accept': 'application/json'

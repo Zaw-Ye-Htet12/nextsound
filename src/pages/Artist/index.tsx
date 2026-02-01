@@ -1,7 +1,7 @@
 
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSearchMusicQuery } from '@/services/ItunesAPI';
-import { Loader, Error } from '@/common';
+import { Loader, Error, Marquee } from '@/common';
 import { FiChevronLeft, FiPlay } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { getImageUrl } from '@/utils';
@@ -85,10 +85,14 @@ const ArtistPage = () => {
                         </div>
 
                         {/* Text Info */}
-                        <div className="flex flex-col gap-3 flex-1 items-center md:items-start mb-2">
-                            <h1 className="text-4xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter drop-shadow-sm leading-tight">
-                                {heroTrack.artist}
-                            </h1>
+                        <div className="flex flex-col gap-3 flex-1 items-center md:items-start mb-2 min-w-0 w-full overflow-hidden">
+                            <div className="w-full max-w-full">
+                                <Marquee speed={40}>
+                                    <h1 className="text-4xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter drop-shadow-sm leading-tight whitespace-nowrap px-2 pb-2">
+                                        {heroTrack.artist}
+                                    </h1>
+                                </Marquee>
+                            </div>
                             <div className="flex items-center gap-3 text-sm md:text-base font-medium text-gray-600 dark:text-gray-300">
                                 <span className="px-3 py-1 bg-brand/10 text-brand rounded-full uppercase tracking-wider text-xs font-bold">Artist</span>
                                 <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
