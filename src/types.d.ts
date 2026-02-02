@@ -95,6 +95,11 @@ export interface ITrack {
   // Legacy properties for backward compatibility
   title?: string;
   artist_image?: string; // artist profile image
+
+  // Content Type discriminator
+  type?: 'song' | 'album' | 'artist';
+  total_tracks?: number; // for albums
+  release_date?: string; // for albums (full date string)
 }
 
 export interface IAlbum {
@@ -105,12 +110,14 @@ export interface IAlbum {
   overview: string; // album description
   backdrop_path: string; // larger image
   artists: string[]; // artist names
+  artist?: string; // single artist name (legacy/fallback)
   release_date: string;
   total_tracks: number;
   spotify_id?: string;
   external_urls?: {
     spotify: string;
   };
+  year?: number;
 }
 
 export interface IArtist {

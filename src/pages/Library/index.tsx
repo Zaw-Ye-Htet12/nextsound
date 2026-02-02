@@ -9,7 +9,7 @@ import { getImageUrl } from "@/utils";
 
 const Library: FC = () => {
     const { favorites, favoritesLoading } = useAudioPlayerContext();
-    const [activeTab, setActiveTab] = useState<'songs' | 'artists'>('songs');
+    const [activeTab, setActiveTab] = useState<'songs' | 'albums' | 'artists'>('songs');
 
     return (
         <div className="max-w-6xl mx-auto flex flex-col relative w-full min-h-screen mt-16">
@@ -39,6 +39,15 @@ const Library: FC = () => {
                         Liked Songs
                     </button>
                     <button
+                        onClick={() => setActiveTab('albums')}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${activeTab === 'albums'
+                            ? 'border-red-500 text-red-600 dark:text-red-400'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                            }`}
+                    >
+                        Albums
+                    </button>
+                    <button
                         onClick={() => setActiveTab('artists')}
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${activeTab === 'artists'
                             ? 'border-red-500 text-red-600 dark:text-red-400'
@@ -58,9 +67,9 @@ const Library: FC = () => {
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mb-4"></div>
                             <p className="text-gray-500 dark:text-gray-400">Loading your favorites...</p>
                         </div>
-                    ) : favorites.length > 0 ? (
+                    ) : favorites.filter(t => t.type !== 'album' && t.type !== 'artist').length > 0 ? (
                         <MusicGrid
-                            tracks={favorites}
+                            tracks={favorites.filter(t => t.type !== 'album' && t.type !== 'artist')}
                             category="library"
                             initialDisplayCount={50}
                             loadMoreCount={50}
@@ -84,6 +93,20 @@ const Library: FC = () => {
                             </Link>
                         </div>
                     )
+                ) : activeTab === 'albums' ? (
+                    // Albums Grid
+                    favorites.filter(t => t.type === 'album').length > 0 ? (
+                        <MusicGrid
+                            tracks={favorites.filter(t => t.type === 'album')}
+                            category="album" // This triggers AlbumCard in MusicGrid
+                            initialDisplayCount={50}
+                            loadMoreCount={50}
+                        />
+                    ) : (
+                        <div className="col-span-full text-center py-20 text-gray-500">
+                            No albums found in your library.
+                        </div>
+                    )
                 ) : (
                     // Artists Grid
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
@@ -91,7 +114,19 @@ const Library: FC = () => {
                             // Deduplicate artists by ID (preferred) or Name
                             const uniqueArtistsMap = new Map<string, ITrack>();
 
+                            // Filter for artists explicitly saved or infer from songs?
+                            // Usually "Artists" tab shows artists followed.
+                            // But maybe also artists from liked songs?
+                            // Current implementation iterates ALL favorites.
+                            // Let's keep it but filter out albums if they duplicate?
+                            // Actually, let's just stick to the existing logic for Artists which infers from favorites.
+                            // But we might want to prioritize `type === 'artist'` items if we have them (Followed Artists).
+
                             favorites.forEach(track => {
+                                if (track.type === 'album') return; // Don't infer artist from album for now? Or do we?
+                                // If we save an Album, we save the album object. It has 'artist'.
+                                // So we can infer.
+
                                 if (!track.artist) return;
                                 // Use artist_id as key if available, otherwise name
                                 const key = track.artist_id || track.artist;
@@ -102,7 +137,8 @@ const Library: FC = () => {
 
                             return Array.from(uniqueArtistsMap.values()).map(track => {
                                 const artistName = track.artist;
-                                const identifier = track.artist_id || encodeURIComponent(artistName || '');
+                                // Prioritize artist_id if available, otherwise encoded name
+                                const identifier = track.artist_id ? track.artist_id : encodeURIComponent(artistName || '');
 
                                 return (
                                     <Link

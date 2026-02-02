@@ -187,7 +187,9 @@ const ArtistPage = () => {
                             <div className="flex items-center gap-3 text-sm md:text-base font-medium text-gray-600 dark:text-gray-300">
                                 <span className="px-3 py-1 bg-brand/10 text-brand rounded-full uppercase tracking-wider text-xs font-bold">Artist</span>
                                 <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-                                <span>{tracks.length} Releases</span>
+                                <span>{tracks.length} Songs</span>
+                                <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                                <span>{albums.length} Albums</span>
                             </div>
                         </div>
 
@@ -210,23 +212,31 @@ const ArtistPage = () => {
                 <div className="flex items-center justify-between mb-6 sticky top-0 bg-white/95 dark:bg-black/95 backdrop-blur-sm py-4 z-40">
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Top Tracks</h2>
                 </div>
-                <MusicGrid
-                    tracks={tracks}
-                    category="artist"
-                />
+                {tracks.length > 0 ? (
+                    <MusicGrid
+                        tracks={tracks}
+                        category="artist"
+                    />
+                ) : (
+                    <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+                        No tracks found for this artist.
+                    </div>
+                )}
 
                 {/* Albums Section */}
-                {albums.length > 0 && (
-                    <>
-                        <div className="flex items-center justify-between mb-6 mt-12 sticky top-0 bg-white/95 dark:bg-black/95 backdrop-blur-sm py-4 z-40">
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Albums</h2>
-                        </div>
-                        <MusicGrid
-                            tracks={albums}
-                            category="album"
-                            onAlbumClick={(album) => navigate(`/album/${album.id}`)}
-                        />
-                    </>
+                <div className="flex items-center justify-between mb-6 mt-12 sticky top-0 bg-white/95 dark:bg-black/95 backdrop-blur-sm py-4 z-40">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Albums</h2>
+                </div>
+                {albums.length > 0 ? (
+                    <MusicGrid
+                        tracks={albums}
+                        category="album"
+                        onAlbumClick={(album) => navigate(`/album/${album.id}`)}
+                    />
+                ) : (
+                    <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+                        No albums found for this artist.
+                    </div>
                 )}
             </div>
         </div>

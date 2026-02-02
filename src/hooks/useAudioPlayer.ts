@@ -460,7 +460,6 @@ export const useAudioPlayer = () => {
       const isDuplicate = prev.queue.some(t => t.id === track.id);
       if (isDuplicate) {
         toast.warning(`"${track.title || track.name}" is already in the queue`);
-        console.log('Track already in queue:', track.title || track.name);
         return prev;
       }
 
@@ -468,6 +467,26 @@ export const useAudioPlayer = () => {
       return {
         ...prev,
         queue: [...prev.queue, track],
+      };
+    });
+  }, []);
+
+  const addTracksToQueue = useCallback((tracks: ITrack[]) => {
+    setState(prev => {
+      // Filter out duplicates
+      const newTracks = tracks.filter(
+        track => !prev.queue.some(qTrack => qTrack.id === track.id)
+      );
+
+      if (newTracks.length === 0) {
+        toast.warning('All tracks are already in the queue');
+        return prev;
+      }
+
+      toast.success(`Added ${newTracks.length} tracks to queue`);
+      return {
+        ...prev,
+        queue: [...prev.queue, ...newTracks],
       };
     });
   }, []);
@@ -532,6 +551,7 @@ export const useAudioPlayer = () => {
     queue: state.queue,
     isQueueOpen: state.isQueueOpen,
     addToQueue,
+    addTracksToQueue,
     removeFromQueue,
     reorderQueue,
     toggleQueue,

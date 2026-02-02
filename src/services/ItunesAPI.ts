@@ -105,7 +105,8 @@ export const itunesApi = createApi({
                             },
                             popularity: 50,
                             genre: (item as any).primaryGenreName,
-                            year: 0
+                            year: 0,
+                            type: 'artist' as const
                         } as ITrack;
                     }
 
@@ -130,11 +131,14 @@ export const itunesApi = createApi({
                             },
                             popularity: 60,
                             genre: (item as any).primaryGenreName,
-                            year: new Date((item as any).releaseDate).getFullYear()
+                            year: new Date((item as any).releaseDate).getFullYear(),
+                            type: 'album' as const,
+                            total_tracks: (item as any).trackCount,
+                            release_date: (item as any).releaseDate
                         } as ITrack;
                     }
 
-                    return transformItunesTrack(item);
+                    return { ...transformItunesTrack(item), type: 'song' as const };
                 });
 
                 return { results };
@@ -184,4 +188,4 @@ export const itunesApi = createApi({
     })
 });
 
-export const { useSearchMusicQuery, useLookupAlbumQuery } = itunesApi;
+export const { useSearchMusicQuery, useLookupAlbumQuery, useLazyLookupAlbumQuery } = itunesApi;

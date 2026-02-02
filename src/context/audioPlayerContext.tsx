@@ -26,6 +26,7 @@ interface AudioPlayerContextType {
   toggleMinimize: () => void;
   closePlayer: () => void;
   addToQueue: (track: ITrack) => void;
+  addTracksToQueue: (tracks: ITrack[]) => void;
   removeFromQueue: (index: number) => void;
   reorderQueue: (newQueue: ITrack[]) => void;
   toggleQueue: () => void;

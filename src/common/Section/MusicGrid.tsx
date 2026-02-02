@@ -1,5 +1,6 @@
 import { FC, useState } from "react";
 import { TrackCard } from "@/components/ui/TrackCard";
+import { AlbumCard } from "@/components/ui/AlbumCard";
 import { ITrack } from "@/types";
 import { useAudioPlayerContext } from "@/context/audioPlayerContext";
 
@@ -52,15 +53,28 @@ const MusicGrid: FC<MusicGridProps> = ({
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-6">
         {displayedTracks.map((track) => (
           <div key={track.id} className="flex flex-col">
-            <TrackCard
-              track={track}
-              category={category}
-              isPlaying={currentTrack?.id === track.id && isPlaying}
-              onPlay={playTrack}
-              onAddToQueue={addToQueue}
-              variant="detailed"
-              onClick={category === 'album' && onAlbumClick ? onAlbumClick : undefined}
-            />
+            {category === 'album' ? (
+              <AlbumCard
+                album={track as any} // Cast because ITrack matches IAlbum shape mostly
+                variant="detailed"
+                onPlay={() => onAlbumClick?.(track)} // Redirect on Play for now, or use onAlbumClick for navigation
+              // Note: AlbumCard handles queueing internally via overlay buttons
+              // onAlbumClick handles navigation to album page
+              // We override the card's native play button to navigate for now (or play album context?)
+              // Usually play on card means PLAY. But navigation via title/click.
+              // For now, let's make the card click navigate to album.
+              />
+            ) : (
+              <TrackCard
+                track={track}
+                category={category}
+                isPlaying={currentTrack?.id === track.id && isPlaying}
+                onPlay={playTrack}
+                onAddToQueue={addToQueue}
+                variant="detailed"
+                onClick={category === 'album' && onAlbumClick ? onAlbumClick : undefined}
+              />
+            )}
           </div>
         ))}
       </div>

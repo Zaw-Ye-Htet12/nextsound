@@ -103,8 +103,9 @@ const AlbumPage = () => {
                         {/* Action Buttons */}
                         <div className="flex items-center gap-4 mt-2 md:mb-2 w-full md:w-auto justify-center md:justify-start">
                             <Button
-                                className="h-14 px-10 rounded-full bg-brand hover:bg-brand/90 text-white text-lg font-bold shadow-lg shadow-brand/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
+                                className="h-14 px-10 rounded-full bg-brand hover:bg-brand/90 text-white text-lg font-bold shadow-lg shadow-brand/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
                                 onClick={() => playAllTracks(tracks)}
+                                disabled={tracks.length === 0}
                             >
                                 <FiPlay className="w-6 h-6 mr-2 fill-current" />
                                 Play All
@@ -127,29 +128,37 @@ const AlbumPage = () => {
                 </div>
 
                 <div className="flex flex-col">
-                    {tracks.map((track, index) => (
-                        <div
-                            key={track.id}
-                            className="group flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                            onClick={() => playAllTracks(tracks)} // Fixed: simple playAllTracks, might need start index
-                        >
-                            <div className="flex items-center gap-4 min-w-0 flex-1">
-                                <span className="w-8 text-center text-gray-500 font-medium group-hover:hidden">{index + 1}</span>
-                                <span className="w-8 justify-center hidden group-hover:flex text-brand">
-                                    <FiPlay className="w-4 h-4 fill-current" />
-                                </span>
+                    {tracks.length > 0 ? (
+                        tracks.map((track, index) => (
+                            <div
+                                key={track.id}
+                                className="group flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                                onClick={() => playAllTracks(tracks, index)}
+                            >
+                                <div className="flex items-center gap-4 min-w-0 flex-1">
+                                    <span className="w-8 text-center text-gray-500 font-medium group-hover:hidden">{index + 1}</span>
+                                    <span className="w-8 justify-center hidden group-hover:flex text-brand">
+                                        <FiPlay className="w-4 h-4 fill-current" />
+                                    </span>
 
-                                <div className="flex flex-col min-w-0">
-                                    <span className="font-medium text-gray-900 dark:text-white truncate">{track.title}</span>
-                                    <span className="text-sm text-gray-500 dark:text-gray-400 truncate">{track.artist}</span>
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="font-medium text-gray-900 dark:text-white truncate">{track.title}</span>
+                                        <span className="text-sm text-gray-500 dark:text-gray-400 truncate">{track.artist}</span>
+                                    </div>
+                                </div>
+
+                                <div className="text-sm text-gray-500 dark:text-gray-400 font-tabular-nums">
+                                    {formatDuration(track.duration || 0)}
                                 </div>
                             </div>
-
-                            <div className="text-sm text-gray-500 dark:text-gray-400 font-tabular-nums">
-                                {formatDuration(track.duration || 0)}
-                            </div>
+                        ))
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500 dark:text-gray-400">
+                            <FiClock className="w-12 h-12 mb-4 opacity-20" />
+                            <p className="text-lg font-medium">No tracks found for this album</p>
+                            <p className="text-sm opacity-60">This album might not have any tracks listed yet.</p>
                         </div>
-                    ))}
+                    )}
                 </div>
 
                 <div className="mt-8 text-xs text-gray-500 dark:text-gray-500 pl-4">

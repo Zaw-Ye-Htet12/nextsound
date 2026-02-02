@@ -40,7 +40,8 @@ export const deezerApi = createApi({
                     },
                     popularity: 80,
                     genre: 'Artist',
-                    year: 0
+                    year: 0,
+                    type: 'artist' as const
                 } as ITrack));
 
                 return { results };
@@ -200,7 +201,9 @@ export const deezerApi = createApi({
                     external_urls: { spotify: album.link },
                     popularity: 50,
                     genre: 'Album',
-                    year: album.release_date ? parseInt(album.release_date.split('-')[0]) : 0
+                    year: album.release_date ? parseInt(album.release_date.split('-')[0]) : 0,
+                    type: 'album' as const,
+                    release_date: album.release_date
                 } as ITrack));
                 return { results };
             }
@@ -230,7 +233,10 @@ export const deezerApi = createApi({
                     external_urls: { spotify: data.link },
                     popularity: data.rank ? Math.min(100, Math.round(data.rank / 10000)) : 50,
                     genre: data.genres?.data?.[0]?.name || 'Album',
-                    year: data.release_date ? parseInt(data.release_date.split('-')[0]) : 0
+                    year: data.release_date ? parseInt(data.release_date.split('-')[0]) : 0,
+                    type: 'album' as const,
+                    total_tracks: data.nb_tracks,
+                    release_date: data.release_date
                 } as ITrack;
 
                 const tracks = (data.tracks?.data || []).map((track: any) => ({
