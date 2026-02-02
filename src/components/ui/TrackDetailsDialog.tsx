@@ -12,6 +12,7 @@ import { ITrack } from '@/types';
 import { getImageUrl } from '@/utils';
 import { Button } from './button';
 import { FiExternalLink, FiCalendar, FiMusic, FiDisc, FiClock } from 'react-icons/fi';
+import { useSearchArtistsQuery } from '@/services/DeezerAPI';
 
 interface TrackDetailsDialogProps {
     track: ITrack | null;
@@ -26,6 +27,13 @@ export const TrackDetailsDialog: React.FC<TrackDetailsDialogProps> = ({
 }) => {
     const navigate = useNavigate();
 
+    // Look up the artist on Deezer to get their Deezer ID (for consistent navigation)
+    // We only run this if we have a track and artist name
+    const { data: deezerArtistValue } = useSearchArtistsQuery(
+        { query: track?.artist || '', limit: 1 },
+        { skip: !track?.artist }
+    );
+
     if (!track) return null;
 
     const formatTime = (ms: number) => {
@@ -37,8 +45,17 @@ export const TrackDetailsDialog: React.FC<TrackDetailsDialogProps> = ({
     const goToArtist = () => {
         if (track?.artist) {
             onOpenChange(false);
-            const artistIdentifier = track.artist_id || encodeURIComponent(track.artist);
-            navigate(`/artist/${artistIdentifier}`);
+
+            // Prioritize the Deezer Artist ID we just looked up
+            const deezerId = deezerArtistValue?.results?.[0]?.id;
+
+            if (deezerId) {
+                navigate(`/artist/${deezerId}`);
+            } else {
+                // Fallback to existing logic if lookup failed or hasn't returned yet
+                const artistIdentifier = track.artist_id || encodeURIComponent(track.artist);
+                navigate(`/artist/${artistIdentifier}`);
+            }
         }
     };
 

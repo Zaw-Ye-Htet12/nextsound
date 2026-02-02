@@ -150,7 +150,7 @@ const ArtistPage = () => {
                 </div>
 
                 {/* Navigation Header - Fixed/Absolute top */}
-                <div className="absolute top-20 z-30 left-20 right-0 p-4 flex items-center justify-between  md:pt-6">
+                <div className="absolute top-20 left-0 md:top-20 z-30 md:left-20 right-0 p-4 flex items-center justify-between  md:pt-6">
                     <Button
                         variant="ghost"
                         size="icon"
