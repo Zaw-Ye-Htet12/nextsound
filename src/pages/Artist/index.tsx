@@ -1,43 +1,130 @@
 
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSearchMusicQuery } from '@/services/ItunesAPI';
+import { useGetArtistDetailsQuery, useSearchArtistsQuery } from '@/services/DeezerAPI';
 import { Loader, Error, Marquee } from '@/common';
 import { FiChevronLeft, FiPlay } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { getImageUrl } from '@/utils';
 import { useAudioPlayerContext } from '@/context/audioPlayerContext';
 import MusicGrid from '@/common/Section/MusicGrid';
+import { ITrack } from '@/types';
 
 const ArtistPage = () => {
     const { name } = useParams<{ name: string }>();
     const navigate = useNavigate();
     const { playAllTracks } = useAudioPlayerContext();
 
-    // Search for tracks by this artist to populate the page
-    // Search for tracks by this artist to populate the page
-    const { data, isLoading, isError } = useSearchMusicQuery({
-        query: name || '',
+    // Determine if we are using Deezer ID (numeric) or iTunes Name (string)
+    const isDeezerId = name && /^\d+$/.test(name);
+
+    // ===================================
+    // 1. RESOLVE ARTIST IDENTITY (Name & Image)
+    // ===================================
+
+    // If ID: Fetch Deezer Details to get Name + Image
+    const {
+        data: deezerArtist,
+        isLoading: isDeezerLoading,
+        isError: isDeezerArtistError
+    } = useGetArtistDetailsQuery(name || '', { skip: !isDeezerId || !name });
+
+    // If Name: Search Deezer to find Image
+    const {
+        data: deezerSearchResults,
+        isLoading: isDeezerSearchLoading
+    } = useSearchArtistsQuery({ query: name || '' }, { skip: !!isDeezerId || !name });
+
+    // Determine the effective Name and Image
+    const resolvedArtistName = isDeezerId ? deezerArtist?.name : name;
+
+    // Get the best available image from either the direct detail fetch or the search result
+    const deezerImage = isDeezerId
+        ? (deezerArtist?.artist_image || deezerArtist?.poster_path)
+        : (deezerSearchResults?.results?.[0]?.artist_image || deezerSearchResults?.results?.[0]?.poster_path);
+
+    // ===================================
+    // 2. FETCH CONTENT FROM ITUNES
+    // ===================================
+    const {
+        data: itunesData,
+        isLoading: isItunesLoading,
+        isError: isItunesError
+    } = useSearchMusicQuery({
+        query: resolvedArtistName || '',
         limit: 50,
         entity: 'song',
         attribute: 'artistTerm'
-    });
+    }, { skip: !resolvedArtistName });
 
-    // Fetch Albums
-    const { data: albumData, isLoading: isAlbumLoading } = useSearchMusicQuery({
-        query: name || '',
+    const {
+        data: itunesAlbumData,
+        isLoading: isItunesAlbumLoading
+    } = useSearchMusicQuery({
+        query: resolvedArtistName || '',
         limit: 20,
         entity: 'album',
         attribute: 'artistTerm'
-    });
+    }, { skip: !resolvedArtistName });
 
-    if (isLoading && isAlbumLoading) return <Loader />;
-    if (isError || !data?.results) return <Error error="Could not load artist data" />;
 
-    const tracks = data.results;
-    const albums = albumData?.results || [];
-    const heroTrack = tracks.length > 0 ? tracks[0] : null;
+    // ===================================
+    // DATA DATA PROCESSING
+    // ===================================
+    const normalize = (str: string) => {
+        return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+    };
 
-    if (!heroTrack) {
+    let heroTrack: ITrack | null = null;
+    let tracks: ITrack[] = [];
+    let albums: ITrack[] = [];
+
+    // Combined Loading State
+    // We are loading if:
+    // 1. Determining Identity (Deezer loading)
+    // 2. Fetching Content (iTunes loading) knowing we have a name
+    const isLoading = isDeezerLoading || isDeezerSearchLoading || (!!resolvedArtistName && (isItunesLoading || isItunesAlbumLoading));
+    const isError = isDeezerArtistError || isItunesError;
+
+    if (itunesData?.results && resolvedArtistName) {
+        const normalizedTargetName = normalize(resolvedArtistName);
+
+        // Filter iTunes results to ensure exact artist match (iTunes search is fuzzy)
+        tracks = (itunesData.results || []).filter(track => {
+            if (!track.artist) return false;
+            if (track.artist.toLowerCase() === resolvedArtistName.toLowerCase()) return true;
+            if (normalize(track.artist) === normalizedTargetName) return true;
+            return false;
+        });
+
+        albums = (itunesAlbumData?.results || []).filter(album => {
+            if (!album.artist) return false;
+            if (album.artist.toLowerCase() === resolvedArtistName.toLowerCase()) return true;
+            if (normalize(album.artist) === normalizedTargetName) return true;
+            return false;
+        });
+
+        // Use the first track as base, but OVERRIDE the image with Deezer's high-res image
+        if (tracks.length > 0) {
+            heroTrack = {
+                ...tracks[0], // Base info from iTunes
+                poster_path: deezerImage || tracks[0].poster_path, // Prefer Deezer Image
+                artist: resolvedArtistName,
+                // If we started with a Deezer ID, keep it for reference, otherwise use what we have
+                artist_id: isDeezerId ? name : undefined
+            } as ITrack;
+        } else if (deezerArtist) {
+            // Fallback: If iTunes has no tracks but we have Deezer Artist info, show that atleast
+            heroTrack = {
+                ...deezerArtist,
+                poster_path: deezerImage || '',
+                artist: resolvedArtistName || ''
+            };
+        }
+    }
+
+    if (isLoading) return <Loader />;
+    if (isError || !heroTrack) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[50vh] pt-20">
                 <h2 className="text-2xl font-bold dark:text-white mb-4">Artist not found</h2>
@@ -54,7 +141,7 @@ const ArtistPage = () => {
                 <div className="absolute inset-0 z-0">
                     <img
                         src={getImageUrl(heroTrack.poster_path)}
-                        alt={name}
+                        alt={heroTrack.artist}
                         className="w-full h-full object-cover transition-transform duration-700"
                     />
                     {/* Gradient overlays for text readability and aesthetic fade */}
@@ -82,7 +169,7 @@ const ArtistPage = () => {
                             <div className="w-40 h-40 md:w-64 md:h-64 rounded-full overflow-hidden shadow-2xl ring-4 ring-white dark:ring-gray-800 mx-auto transform transition-transform duration-500 hover:scale-105">
                                 <img
                                     src={getImageUrl(heroTrack.poster_path)}
-                                    alt={name}
+                                    alt={heroTrack.artist}
                                     className="w-full h-full object-cover"
                                 />
                             </div>

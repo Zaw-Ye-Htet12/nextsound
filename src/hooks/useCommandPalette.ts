@@ -196,7 +196,7 @@ export const useCommandPalette = ({
             image: artist.poster_path,
             data: artist,
             isExactMatch: isExact,
-            action: () => navigate(`/artist/${encodeURIComponent(artist.name)}`)
+            action: () => navigate(`/artist/${artist.id}`)
           };
         }));
     }
@@ -328,11 +328,51 @@ export const useCommandPalette = ({
     }
   };
 
-  // Get recent items for empty state
+  // Get recent items for empty state and rehydrate actions
   const recentItems = useMemo(() => {
     if (query.trim()) return [];
-    return searchHistory.slice(0, 5);
-  }, [query, searchHistory]);
+
+    return searchHistory.slice(0, 5).map(item => {
+      // Rehydrate actions since they are lost in localStorage
+      let action = item.action;
+
+      if (!action) {
+        if (item.type === 'artist') {
+          // Use ID if available (preferred)
+          const artistId = item.data?.id || item.id.replace('artist-', '');
+          // Identify if ID is numeric (Deezer) or name-based (legacy/itunes?)
+          // If it looks like a real ID, use it. Otherwise use name as fallback.
+          if (artistId && !isNaN(Number(artistId))) {
+            action = () => navigate(`/artist/${artistId}`);
+          } else {
+            action = () => navigate(`/artist/${encodeURIComponent(item.title)}`);
+          }
+        } else if (item.type === 'album') {
+          // Assuming we have album navigation now
+          // We need album ID from item.data if available, or just fallback
+          const albumId = item.data?.id || item.id.replace('album-', '');
+          action = () => navigate(`/album/${albumId}`);
+        } else if (item.type === 'track') {
+          // Tracks usually play, but we might not have the play function here easily without context
+          // But wait, the original action might have been just navigation or selection?
+          // In musicResults (line 206), tracks don't have a specific explicit action defined in the map?
+          // Ah, line 206 map doesn't add 'action'.
+          // So default behavior relies on onItemSelect handler in parent?
+          // BUT, artists (line 199) DO have an action.
+
+          // For tracks, maybe we just want to navigate to SearchPage with track name?
+          // Or if we want to play, we need the player context.
+          // For now, let's at least support Artist/Album/Command navigation.
+        } else if (item.type === 'command') {
+          // Re-find the command from the commands list
+          const cmd = commands.find(c => c.id === item.id);
+          if (cmd) action = cmd.action;
+        }
+      }
+
+      return { ...item, action };
+    });
+  }, [query, searchHistory, navigate, commands]);
 
   // Loading state
   const isLoading = (isMusicSearchLoading || isArtistSearchLoading) && query.trim();

@@ -17,7 +17,10 @@ const ArtistSlides: FC<ArtistSlidesProps> = ({ tracks }) => {
 
     tracks.forEach(track => {
         if (track.artist && !uniqueArtists.has(track.artist)) {
-            uniqueArtists.set(track.artist, track);
+            uniqueArtists.set(track.artist, {
+                ...track,
+                id: track.artist_id || track.id
+            });
         }
     });
 

@@ -11,7 +11,7 @@ export const ArtistCard: FC<ArtistCardProps> = ({ artist }) => {
     return (
         <div className="flex flex-col items-center gap-3 w-full group cursor-pointer">
             <Link
-                to={`/artist/${encodeURIComponent(artist.artist!)}`}
+                to={`/artist/${artist.id}`}
                 className="w-full flex flex-col items-center"
             >
                 <div className="w-[140px] h-[140px] rounded-full overflow-hidden shadow-lg border-2 border-transparent group-hover:border-brand transition-all duration-300 relative">

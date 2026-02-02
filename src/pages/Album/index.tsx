@@ -1,6 +1,7 @@
 
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLookupAlbumQuery } from '@/services/ItunesAPI';
+import { useGetAlbumDetailsQuery } from '@/services/DeezerAPI';
 import { Loader, Error, Marquee } from '@/common';
 import { FiChevronLeft, FiPlay, FiClock } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
@@ -12,12 +13,34 @@ const AlbumPage = () => {
     const navigate = useNavigate();
     const { playAllTracks } = useAudioPlayerContext();
 
-    const { data, isLoading, isError } = useLookupAlbumQuery({ id: id || '' }, { skip: !id });
+    const isDeezerId = id && /^\d+$/.test(id);
 
-    if (isLoading) return <Loader />;
-    if (isError || !data || !data.album || !data.album.id) return <Error error="Could not load album data" />;
+    // iTunes Query - Remove restriction on running this query
+    const { data: itunesData, isLoading: isItunesLoading, isError: isItunesError } = useLookupAlbumQuery({ id: id || '' }, { skip: !id });
 
-    const { album, tracks } = data;
+    // Deezer Query - Only run if iTunes fails or if we specifically want to try (kept for backup, but priority is iTunes)
+    const { data: deezerData, isLoading: isDeezerLoading, isError: isDeezerError } = useGetAlbumDetailsQuery({ id: id || '' }, { skip: !id || (!!itunesData && !isItunesError) });
+
+    if (isItunesLoading || (isItunesError && !itunesData && isDeezerLoading)) return <Loader />;
+
+    // Normalize data
+    let album: any = null;
+    let tracks: any[] = [];
+    let isError = false;
+
+    // Prioritize iTunes Data
+    if (itunesData && itunesData.album && itunesData.album.id) {
+        album = itunesData.album;
+        tracks = itunesData.tracks;
+    } else if (isDeezerId && deezerData?.album) {
+        // Fallback to Deezer if ID looks like Deezer ID and we have data
+        album = deezerData.album;
+        tracks = deezerData.tracks;
+    } else {
+        isError = true;
+    }
+
+    if (isError || !album) return <Error error="Could not load album data" />;
 
     return (
         <div className="flex flex-col w-full min-h-screen bg-white dark:bg-black">
@@ -71,7 +94,7 @@ const AlbumPage = () => {
                                 </Marquee>
                             </div>
                             <div className="flex items-center gap-3 text-sm md:text-base font-medium text-gray-600 dark:text-gray-300">
-                                <span className="px-3 py-1 bg-brand/10 text-brand rounded-full uppercase tracking-wider text-xs font-bold">Artist</span>
+                                <span className="px-3 py-1 bg-brand/10 text-brand rounded-full uppercase tracking-wider text-xs font-bold">Album</span>
                                 <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
                                 <span>{tracks.length} Releases</span>
                             </div>

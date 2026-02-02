@@ -81,8 +81,12 @@ const SearchPage = () => {
                             <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Top Result</h2>
                             <div
                                 onClick={() => {
-                                    if (topResult?.type === 'artist') navigate(`/artist/${encodeURIComponent(topResult.name)}`);
-                                    // Handling track click if needed, though Top Result usually navigates to context
+                                    if (topResult?.type === 'artist') {
+                                        // Prefer ID if available (Deezer), fallback to name
+                                        const identifier = topResult.id && /^\d+$/.test(topResult.id) ? topResult.id : encodeURIComponent(topResult.name);
+                                        navigate(`/artist/${identifier}`);
+                                    }
+                                    // Handling track click if needed
                                 }}
                                 className="bg-gray-100 dark:bg-gray-800/50 p-6 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors cursor-pointer group relative"
                             >
@@ -152,7 +156,10 @@ const SearchPage = () => {
                             <div
                                 key={artist.id}
                                 className="cursor-pointer group text-center"
-                                onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
+                                onClick={() => {
+                                    const identifier = artist.id && /^\d+$/.test(artist.id) ? artist.id : encodeURIComponent(artist.name);
+                                    navigate(`/artist/${identifier}`);
+                                }}
                             >
                                 <div className="aspect-square rounded-full overflow-hidden mb-3 bg-gray-200 dark:bg-gray-700 shadow-sm group-hover:shadow-md transition-shadow">
                                     {artist.poster_path ? (

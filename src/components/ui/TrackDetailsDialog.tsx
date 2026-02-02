@@ -37,7 +37,8 @@ export const TrackDetailsDialog: React.FC<TrackDetailsDialogProps> = ({
     const goToArtist = () => {
         if (track?.artist) {
             onOpenChange(false);
-            navigate(`/artist/${encodeURIComponent(track.artist)}`);
+            const artistIdentifier = track.artist_id || encodeURIComponent(track.artist);
+            navigate(`/artist/${artistIdentifier}`);
         }
     };
 

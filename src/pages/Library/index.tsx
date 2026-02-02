@@ -4,6 +4,7 @@ import { FiHeart, FiMusic } from "react-icons/fi";
 
 import MusicGrid from "@/common/Section/MusicGrid";
 import { useAudioPlayerContext } from "@/context/audioPlayerContext";
+import { ITrack } from "@/types";
 import { getImageUrl } from "@/utils";
 
 const Library: FC = () => {
@@ -86,32 +87,47 @@ const Library: FC = () => {
                 ) : (
                     // Artists Grid
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                        {Array.from(new Set(favorites.map(t => t.artist))).filter(Boolean).map(artist => {
-                            // Find fine image for this artist from the first track in favorites
-                            const track = favorites.find(t => t.artist === artist);
-                            return (
-                                <Link
-                                    to={`/artist/${encodeURIComponent(artist!)}`}
-                                    key={artist}
-                                    className="flex flex-col group"
-                                >
-                                    <div className="aspect-square rounded-full overflow-hidden mb-3 shadow-lg group-hover:shadow-xl transition-shadow relative">
-                                        <img
-                                            src={getImageUrl(track?.poster_path || '')}
-                                            alt={artist}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                        />
-                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                                    </div>
-                                    <h3 className="text-center font-bold text-gray-900 dark:text-white truncate px-2 group-hover:text-brand transition-colors">
-                                        {artist}
-                                    </h3>
-                                    <p className="text-center text-xs text-gray-500 dark:text-gray-400">
-                                        Artist
-                                    </p>
-                                </Link>
-                            );
-                        })}
+                        {(() => {
+                            // Deduplicate artists by ID (preferred) or Name
+                            const uniqueArtistsMap = new Map<string, ITrack>();
+
+                            favorites.forEach(track => {
+                                if (!track.artist) return;
+                                // Use artist_id as key if available, otherwise name
+                                const key = track.artist_id || track.artist;
+                                if (!uniqueArtistsMap.has(key)) {
+                                    uniqueArtistsMap.set(key, track);
+                                }
+                            });
+
+                            return Array.from(uniqueArtistsMap.values()).map(track => {
+                                const artistName = track.artist;
+                                const identifier = track.artist_id || encodeURIComponent(artistName || '');
+
+                                return (
+                                    <Link
+                                        to={`/artist/${identifier}`}
+                                        key={identifier}
+                                        className="flex flex-col group"
+                                    >
+                                        <div className="aspect-square rounded-full overflow-hidden mb-3 shadow-lg group-hover:shadow-xl transition-shadow relative">
+                                            <img
+                                                src={getImageUrl(track.poster_path || '')}
+                                                alt={artistName}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            />
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                                        </div>
+                                        <h3 className="text-center font-bold text-gray-900 dark:text-white truncate px-2 group-hover:text-brand transition-colors">
+                                            {artistName}
+                                        </h3>
+                                        <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+                                            Artist
+                                        </p>
+                                    </Link>
+                                );
+                            });
+                        })()}
                         {favorites.length === 0 && (
                             <div className="col-span-full text-center py-20 text-gray-500">
                                 No artists found in your library.

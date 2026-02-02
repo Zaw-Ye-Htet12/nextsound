@@ -218,7 +218,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         <div
                           key={item.id}
                           className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors duration-200"
-                          onClick={() => handleItemSelect(item)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleItemSelect(item);
+                          }}
                         >
                           <div className="w-8 h-8 rounded overflow-hidden bg-gray-200 dark:bg-gray-700 mr-3 shrink-0">
                             {item.image ? (
