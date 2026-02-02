@@ -50,6 +50,29 @@ app.get('/api/itunes', async (req, res) => {
   }
 });
 
+// iTunes Lookup Proxy (New)
+app.get('/api/itunes/lookup', async (req, res) => {
+  try {
+    const itunesUrl = 'https://itunes.apple.com/lookup';
+    console.log(`Proxying iTunes Lookup request:`, req.query);
+
+    const response = await axios.get(itunesUrl, {
+      params: {
+        country: 'US',
+        ...req.query // Passes id, entity, etc.
+      },
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('iTunes Lookup Proxy error:', error.message);
+    res.status(500).json({ error: 'Failed to lookup from iTunes' });
+  }
+});
+
 // Deezer Generic Search (Tracks) Proxy
 // Must match this specific path
 app.get('/api/deezer/search', async (req, res) => {

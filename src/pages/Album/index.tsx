@@ -1,60 +1,33 @@
 
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSearchMusicQuery } from '@/services/ItunesAPI';
+import { useLookupAlbumQuery } from '@/services/ItunesAPI';
 import { Loader, Error, Marquee } from '@/common';
-import { FiChevronLeft, FiPlay } from 'react-icons/fi';
+import { FiChevronLeft, FiPlay, FiClock } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { getImageUrl } from '@/utils';
 import { useAudioPlayerContext } from '@/context/audioPlayerContext';
-import MusicGrid from '@/common/Section/MusicGrid';
 
-const ArtistPage = () => {
-    const { name } = useParams<{ name: string }>();
+const AlbumPage = () => {
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { playAllTracks } = useAudioPlayerContext();
 
-    // Search for tracks by this artist to populate the page
-    // Search for tracks by this artist to populate the page
-    const { data, isLoading, isError } = useSearchMusicQuery({
-        query: name || '',
-        limit: 50,
-        entity: 'song',
-        attribute: 'artistTerm'
-    });
+    const { data, isLoading, isError } = useLookupAlbumQuery({ id: id || '' }, { skip: !id });
 
-    // Fetch Albums
-    const { data: albumData, isLoading: isAlbumLoading } = useSearchMusicQuery({
-        query: name || '',
-        limit: 20,
-        entity: 'album',
-        attribute: 'artistTerm'
-    });
+    if (isLoading) return <Loader />;
+    if (isError || !data || !data.album || !data.album.id) return <Error error="Could not load album data" />;
 
-    if (isLoading && isAlbumLoading) return <Loader />;
-    if (isError || !data?.results) return <Error error="Could not load artist data" />;
-
-    const tracks = data.results;
-    const albums = albumData?.results || [];
-    const heroTrack = tracks.length > 0 ? tracks[0] : null;
-
-    if (!heroTrack) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[50vh] pt-20">
-                <h2 className="text-2xl font-bold dark:text-white mb-4">Artist not found</h2>
-                <Button onClick={() => navigate(-1)}>Go Back</Button>
-            </div>
-        );
-    }
+    const { album, tracks } = data;
 
     return (
         <div className="flex flex-col w-full min-h-screen bg-white dark:bg-black">
-            {/* Hero Section */}
+            {/* Header / Hero Section */}
             <div className="relative pt-100 w-full h-[55vh] md:h-[50vh] min-h-[500px]">
                 {/* Background Image - Expanded for mobile immersion */}
                 <div className="absolute inset-0 z-0">
                     <img
-                        src={getImageUrl(heroTrack.poster_path)}
-                        alt={name}
+                        src={getImageUrl(album.poster_path)}
+                        alt={album.title}
                         className="w-full h-full object-cover transition-transform duration-700"
                     />
                     {/* Gradient overlays for text readability and aesthetic fade */}
@@ -81,8 +54,8 @@ const ArtistPage = () => {
                         <div className="relative group shrink-0">
                             <div className="w-40 h-40 md:w-64 md:h-64 rounded-full overflow-hidden shadow-2xl ring-4 ring-white dark:ring-gray-800 mx-auto transform transition-transform duration-500 hover:scale-105">
                                 <img
-                                    src={getImageUrl(heroTrack.poster_path)}
-                                    alt={name}
+                                    src={getImageUrl(album.poster_path)}
+                                    alt={album.title}
                                     className="w-full h-full object-cover"
                                 />
                             </div>
@@ -93,7 +66,7 @@ const ArtistPage = () => {
                             <div className="w-full max-w-full">
                                 <Marquee speed={40}>
                                     <h1 className="text-4xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter drop-shadow-sm leading-tight whitespace-nowrap px-2 pb-2">
-                                        {heroTrack.artist}
+                                        {album.title}
                                     </h1>
                                 </Marquee>
                             </div>
@@ -118,32 +91,57 @@ const ArtistPage = () => {
                 </div>
             </div>
 
-            {/* Content Section */}
-            <div className="relative z-20 px-4 md:px-8 py-6 max-w-7xl mx-auto w-full pb-32">
-                <div className="flex items-center justify-between mb-6 sticky top-0 bg-white/95 dark:bg-black/95 backdrop-blur-sm py-4 z-40">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Top Tracks</h2>
+            {/* Tracks List */}
+            <div className="max-w-7xl mx-auto w-full px-4 py-8 pb-32">
+                <div className="flex items-center justify-between mb-4 px-2">
+                    <div className="flex items-center gap-4 text-sm text-gray-500 font-medium uppercase tracking-wider">
+                        <span className="w-8 text-center">#</span>
+                        <span>Title</span>
+                    </div>
+                    <div className="pr-4">
+                        <FiClock className="w-4 h-4 text-gray-500" />
+                    </div>
                 </div>
-                <MusicGrid
-                    tracks={tracks}
-                    category="artist"
-                />
 
-                {/* Albums Section */}
-                {albums.length > 0 && (
-                    <>
-                        <div className="flex items-center justify-between mb-6 mt-12 sticky top-0 bg-white/95 dark:bg-black/95 backdrop-blur-sm py-4 z-40">
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Albums</h2>
+                <div className="flex flex-col">
+                    {tracks.map((track, index) => (
+                        <div
+                            key={track.id}
+                            className="group flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                            onClick={() => playAllTracks(tracks)} // Fixed: simple playAllTracks, might need start index
+                        >
+                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                                <span className="w-8 text-center text-gray-500 font-medium group-hover:hidden">{index + 1}</span>
+                                <span className="w-8 justify-center hidden group-hover:flex text-brand">
+                                    <FiPlay className="w-4 h-4 fill-current" />
+                                </span>
+
+                                <div className="flex flex-col min-w-0">
+                                    <span className="font-medium text-gray-900 dark:text-white truncate">{track.title}</span>
+                                    <span className="text-sm text-gray-500 dark:text-gray-400 truncate">{track.artist}</span>
+                                </div>
+                            </div>
+
+                            <div className="text-sm text-gray-500 dark:text-gray-400 font-tabular-nums">
+                                {formatDuration(track.duration || 0)}
+                            </div>
                         </div>
-                        <MusicGrid
-                            tracks={albums}
-                            category="album"
-                            onAlbumClick={(album) => navigate(`/album/${album.id}`)}
-                        />
-                    </>
-                )}
+                    ))}
+                </div>
+
+                <div className="mt-8 text-xs text-gray-500 dark:text-gray-500 pl-4">
+                    <p>© {album.year} {album.artist}</p>
+                </div>
             </div>
         </div>
     );
 };
 
-export default ArtistPage;
+const formatDuration = (ms: number) => {
+    if (!ms) return '-:--';
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
+
+export default AlbumPage;

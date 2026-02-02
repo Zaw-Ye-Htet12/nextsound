@@ -11,6 +11,7 @@ interface MusicGridProps {
   onLoadMore?: () => void;
   isLoadingMore?: boolean;
   hasMoreContent?: boolean;
+  onAlbumClick?: (album: ITrack) => void; // New prop for album navigation
 }
 
 const MusicGrid: FC<MusicGridProps> = ({
@@ -20,7 +21,8 @@ const MusicGrid: FC<MusicGridProps> = ({
   loadMoreCount = 18, // Load 3 more rows each time
   onLoadMore,
   isLoadingMore = false,
-  hasMoreContent = false
+  hasMoreContent = false,
+  onAlbumClick
 }) => {
   const [visibleCount, setVisibleCount] = useState(initialDisplayCount);
 
@@ -57,6 +59,7 @@ const MusicGrid: FC<MusicGridProps> = ({
               onPlay={playTrack}
               onAddToQueue={addToQueue}
               variant="detailed"
+              onClick={category === 'album' && onAlbumClick ? onAlbumClick : undefined}
             />
           </div>
         ))}

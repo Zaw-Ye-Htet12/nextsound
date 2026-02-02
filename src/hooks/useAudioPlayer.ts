@@ -487,11 +487,14 @@ export const useAudioPlayer = () => {
     setState(prev => ({ ...prev, isQueueOpen: !prev.isQueueOpen }));
   }, []);
 
-  const playAllTracks = useCallback((tracks: ITrack[]) => {
-    if (tracks.length === 0) return;
+  const playAllTracks = useCallback((tracks: ITrack[], startIndex = 0) => {
+    if (tracks.length === 0 || startIndex >= tracks.length) return;
 
-    // First track plays immediately, rest go to queue
-    const [firstTrack, ...restTracks] = tracks;
+    // Track at startIndex plays immediately
+    const firstTrack = tracks[startIndex];
+
+    // Remaining tracks go to queue
+    const restTracks = tracks.slice(startIndex + 1);
 
     setState(prev => ({
       ...prev,
@@ -501,7 +504,7 @@ export const useAudioPlayer = () => {
       queue: restTracks,
     }));
 
-    toast.success(`Playing ${tracks.length} track${tracks.length > 1 ? 's' : ''}`);
+    toast.success(`Playing from "${firstTrack.title || firstTrack.name}"`);
   }, []);
 
   return {

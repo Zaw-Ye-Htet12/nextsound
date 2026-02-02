@@ -13,6 +13,7 @@ interface TrackCardProps {
   category: string;
   isPlaying?: boolean;
   onPlay?: (track: ITrack) => void;
+  onClick?: (track: ITrack) => void; // Add generic click handler
   onAddToQueue?: (track: ITrack) => void;
   variant?: 'compact' | 'detailed' | 'featured';
   className?: string;
@@ -23,6 +24,7 @@ export const TrackCard: React.FC<TrackCardProps> = ({
   category: _category,
   isPlaying: _isPlayingProp,
   onPlay,
+  onClick,
   onAddToQueue,
   variant = 'detailed',
   className
@@ -63,7 +65,11 @@ export const TrackCard: React.FC<TrackCardProps> = ({
       onMouseLeave={() => setIsHovered(false)}
       onClick={(e) => {
         e.stopPropagation();
-        onPlay?.(track);
+        if (onClick) {
+          onClick(track);
+        } else {
+          onPlay?.(track);
+        }
       }}
     >
       {/* Main Content */}
@@ -73,7 +79,11 @@ export const TrackCard: React.FC<TrackCardProps> = ({
           className="relative overflow-hidden rounded-lg mb-3"
           onClick={(e) => {
             e.stopPropagation();
-            onPlay?.(track);
+            if (onClick) {
+              onClick(track);
+            } else {
+              onPlay?.(track);
+            }
           }}
         >
           {/* Loading skeleton */}

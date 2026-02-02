@@ -29,7 +29,7 @@ interface AudioPlayerContextType {
   removeFromQueue: (index: number) => void;
   reorderQueue: (newQueue: ITrack[]) => void;
   toggleQueue: () => void;
-  playAllTracks: (tracks: ITrack[]) => void;
+  playAllTracks: (tracks: ITrack[], startIndex?: number) => void;
 }
 
 const AudioPlayerContext = createContext<AudioPlayerContextType | undefined>(undefined);

@@ -32,6 +32,7 @@ const UpdatePasswordPage = lazy(() => import("./pages/Auth/UpdatePasswordPage"))
 const VerifyEmailPage = lazy(() => import("./pages/Auth/VerifyEmailPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
+const AlbumPage = lazy(() => import("./pages/Album"));
 
 const App = () => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -90,6 +91,7 @@ const App = () => {
                 <Route path="/artists" element={<ArtistsPage />} />
                 <Route path="/musics" element={<MusicsPage />} />
                 <Route path="/artist/:name" element={<ArtistPage />} />
+                <Route path="/album/:id" element={<AlbumPage />} />
                 <Route path="/search/:query" element={<SearchPage />} />
                 <Route element={<PublicRoute />}>
                   <Route path="/login" element={<LoginPage />} />

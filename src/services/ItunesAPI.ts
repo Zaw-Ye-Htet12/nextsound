@@ -25,6 +25,13 @@ interface ItunesTrack {
     primaryGenreName: string;
     releaseDate: string;
     trackViewUrl: string;
+    wrapperType?: string; // 'track', 'collection', 'artist'
+    collectionType?: string; // 'Album', etc.
+    collectionId?: number;
+    artistId?: number;
+    artistLinkUrl?: string; // for artist
+    collectionViewUrl?: string; // for album
+    trackCount?: number; // for album
 }
 
 // Transform iTunes track to our internal ITrack interface
@@ -75,7 +82,7 @@ export const itunesApi = createApi({
                 };
             },
             transformResponse: (response: ItunesResponse) => {
-                // Determine if we are handling tracks or artists based on result structure
+                // Determine if we are handling tracks, artists, or albums based on result structure
                 const results = response.results.map(item => {
                     // Check if wrapperType is 'artist'
                     if ((item as any).wrapperType === 'artist') {
@@ -102,13 +109,79 @@ export const itunesApi = createApi({
                         } as ITrack;
                     }
 
+                    // Check if collectionType is 'Album' or wrapperType is 'collection'
+                    if ((item as any).collectionType === 'Album' || (item as any).wrapperType === 'collection') {
+                        const highResImage = (item as any).artworkUrl100?.replace('100x100bb', '600x600bb') || '';
+                        return {
+                            id: String((item as any).collectionId),
+                            spotify_id: String((item as any).collectionId),
+                            poster_path: highResImage,
+                            backdrop_path: highResImage,
+                            original_title: (item as any).collectionName,
+                            name: (item as any).collectionName,
+                            title: (item as any).collectionName,
+                            overview: `Album • ${(item as any).trackCount} Tracks • ${new Date((item as any).releaseDate).getFullYear()}`,
+                            artist: (item as any).artistName,
+                            album: (item as any).collectionName,
+                            duration: 0,
+                            preview_url: null, // Albums don't have a single preview
+                            external_urls: {
+                                spotify: (item as any).collectionViewUrl
+                            },
+                            popularity: 60,
+                            genre: (item as any).primaryGenreName,
+                            year: new Date((item as any).releaseDate).getFullYear()
+                        } as ITrack;
+                    }
+
                     return transformItunesTrack(item);
                 });
 
                 return { results };
             }
+        }),
+        lookupAlbum: builder.query<{ album: ITrack, tracks: ITrack[] }, { id: string }>({
+            query: ({ id }) => ({
+                url: USE_BACKEND_PROXY ? '/itunes/lookup' : '/lookup',
+                params: {
+                    id: id,
+                    entity: 'song',
+                    country: 'US'
+                }
+            }),
+            transformResponse: (response: ItunesResponse) => {
+                const results = response.results;
+                if (!results || results.length === 0) return { album: {} as ITrack, tracks: [] };
+
+                // The first item is usually the Collection (Album) info, followed by tracks
+                const collection = results.find(r => r.wrapperType === 'collection');
+                const tracks = results.filter(r => r.wrapperType === 'track');
+
+                const album: ITrack = collection ? {
+                    id: String(collection.collectionId),
+                    poster_path: collection.artworkUrl100?.replace('100x100bb', '600x600bb') || '',
+                    backdrop_path: collection.artworkUrl100?.replace('100x100bb', '600x600bb') || '',
+                    original_title: collection.collectionName,
+                    name: collection.collectionName,
+                    title: collection.collectionName,
+                    overview: `Album • ${collection.artistName} • ${new Date(collection.releaseDate).getFullYear()}`,
+                    artist: collection.artistName,
+                    album: collection.collectionName,
+                    year: new Date(collection.releaseDate).getFullYear(),
+                    genre: collection.primaryGenreName,
+                    duration: 0
+                } : {} as ITrack;
+
+                const processedTracks = tracks.map(transformItunesTrack).map(t => ({
+                    ...t,
+                    // Ensure album art is high res from album if track art is missing
+                    poster_path: t.poster_path || album.poster_path
+                }));
+
+                return { album, tracks: processedTracks };
+            }
         })
     })
 });
 
-export const { useSearchMusicQuery } = itunesApi;
+export const { useSearchMusicQuery, useLookupAlbumQuery } = itunesApi;
