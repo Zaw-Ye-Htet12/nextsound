@@ -12,6 +12,7 @@ import {
 import { CommandPalette } from "@/components/ui/CommandPalette";
 import { MiniPlayer } from "@/components/ui/MiniPlayer";
 import { QueueDrawer } from "@/components/ui/QueueDrawer";
+import { ChatWidget } from "@/components/ui/ChatWidget";
 import { useAudioPlayerContext } from "@/context/audioPlayerContext";
 import { Toaster } from "sonner";
 import PublicRoute from "@/components/auth/PublicRoute";
@@ -146,6 +147,7 @@ const App = () => {
         />
       )}
       <Toaster richColors position="top-center" />
+      <ChatWidget />
     </>
   );
 };

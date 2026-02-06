@@ -26,4 +26,6 @@ export const SUPABASE_URL: string = import.meta.env.VITE_SUPABASE_URL || 'https:
 export const SUPABASE_ANON_KEY: string = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzbHdrcmRzbml4aWZhdXh1cWdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NDUwOTUsImV4cCI6MjA3NjMyMTA5NX0.RhQP6dogPyXYXA7zRUwIX1xJNB7jjNwSZ_MqULtKTxs';
 
 // Gemini AI Configuration
-export const GEMINI_API_KEY: string | undefined = import.meta.env.VITE_GEMINI_API_KEY;
+// Gemini AI Configuration
+// API Key is now handled server-side in the proxy for security.
+// export const GEMINI_API_KEY = ... (Removed)
